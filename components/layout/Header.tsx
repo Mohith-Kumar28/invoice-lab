@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { FileText } from 'lucide-react';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 
 export function Header() {
   return (
@@ -11,13 +12,19 @@ export function Header() {
             InvoiceForge
           </span>
         </Link>
-        <nav className="flex items-center space-x-6 text-sm font-medium">
+        
+        <div className="hidden sm:flex text-xs text-muted-foreground items-center">
+          Made with ❤️ for freelancers & agencies
+        </div>
+
+        <nav className="flex items-center space-x-4 sm:space-x-6 text-sm font-medium">
           <Link
             href="/about"
             className="transition-colors hover:text-foreground/80 text-foreground/60"
           >
             About
           </Link>
+          <ThemeToggle />
         </nav>
       </div>
     </header>

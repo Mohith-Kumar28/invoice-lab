@@ -144,79 +144,83 @@ const styles = StyleSheet.create({
   }
 });
 
-export const ModernTemplate = ({ invoice }: { invoice: Partial<Invoice> }) => (
-  <Document>
-    <Page size="A4" style={styles.page}>
-      <View style={styles.headerBand}>
-        <View>
-          <Text style={styles.title}>{invoice.title || 'INVOICE'}</Text>
-          <Text style={styles.valueWhite}>{invoice.invoiceNumber}</Text>
-        </View>
-        <View style={styles.invoiceInfo}>
-          <Text style={styles.labelWhite}>Issue Date</Text>
-          <Text style={styles.valueWhite}>{invoice.issueDate ? new Date(invoice.issueDate).toLocaleDateString() : ''}</Text>
-          <Text style={styles.labelWhite}>Due Date</Text>
-          <Text style={styles.valueWhite}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : ''}</Text>
-        </View>
-      </View>
+export const ModernTemplate = ({ invoice }: { invoice: Partial<Invoice> }) => {
+  const themeColor = invoice.colorTheme || '#1a365d';
 
-      <View style={styles.content}>
-        <View style={styles.section}>
-          <View style={styles.addressBox}>
-            <Text style={styles.label}>From</Text>
-            <Text style={styles.businessName}>{invoice.from?.businessName}</Text>
-            <Text style={styles.addressText}>{invoice.from?.email}</Text>
-            <Text style={styles.addressText}>{invoice.from?.address?.line1}</Text>
-            <Text style={styles.addressText}>{invoice.from?.address?.city}, {invoice.from?.address?.country}</Text>
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        <View style={[styles.headerBand, { backgroundColor: themeColor }]}>
+          <View>
+            <Text style={styles.title}>{invoice.title || 'INVOICE'}</Text>
+            <Text style={styles.valueWhite}>{invoice.invoiceNumber}</Text>
           </View>
-          <View style={styles.addressBox}>
-            <Text style={styles.label}>Bill To</Text>
-            <Text style={styles.businessName}>{invoice.to?.businessName}</Text>
-            <Text style={styles.addressText}>{invoice.to?.email}</Text>
-            <Text style={styles.addressText}>{invoice.to?.address?.line1}</Text>
-            <Text style={styles.addressText}>{invoice.to?.address?.city}, {invoice.to?.address?.country}</Text>
+          <View style={styles.invoiceInfo}>
+            <Text style={styles.labelWhite}>Issue Date</Text>
+            <Text style={styles.valueWhite}>{invoice.issueDate ? new Date(invoice.issueDate).toLocaleDateString() : ''}</Text>
+            <Text style={styles.labelWhite}>Due Date</Text>
+            <Text style={styles.valueWhite}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : ''}</Text>
           </View>
         </View>
 
-        <View style={styles.table}>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.col1, styles.th]}>Description</Text>
-            <Text style={[styles.col2, styles.th]}>Qty</Text>
-            <Text style={[styles.col3, styles.th]}>Price</Text>
-            <Text style={[styles.col4, styles.th]}>Amount</Text>
-          </View>
-          {invoice.lineItems?.map((item, i) => (
-            <View key={i} style={styles.tr}>
-              <Text style={[styles.col1, styles.td]}>{item.description}</Text>
-              <Text style={[styles.col2, styles.td]}>{item.quantity}</Text>
-              <Text style={[styles.col3, styles.td]}>{item.unitPrice}</Text>
-              <Text style={[styles.col4, styles.td]}>{item.amount?.toFixed(2)}</Text>
+        <View style={styles.content}>
+          <View style={styles.section}>
+            <View style={styles.addressBox}>
+              <Text style={styles.label}>From</Text>
+              <Text style={styles.businessName}>{invoice.from?.businessName}</Text>
+              <Text style={styles.addressText}>{invoice.from?.email}</Text>
+              <Text style={styles.addressText}>{invoice.from?.address?.line1}</Text>
+              <Text style={styles.addressText}>{invoice.from?.address?.city}{invoice.from?.address?.city && invoice.from?.address?.country ? ', ' : ''}{invoice.from?.address?.country}</Text>
             </View>
-          ))}
-        </View>
-
-        <View style={styles.totals}>
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Subtotal</Text>
-            <Text style={styles.totalValue}>{invoice.currency} {invoice.subtotal?.toFixed(2)}</Text>
+            <View style={styles.addressBox}>
+              <Text style={styles.label}>Bill To</Text>
+              <Text style={styles.businessName}>{invoice.to?.businessName}</Text>
+              <Text style={styles.addressText}>{invoice.to?.email}</Text>
+              <Text style={styles.addressText}>{invoice.to?.address?.line1}</Text>
+              <Text style={styles.addressText}>{invoice.to?.address?.city}{invoice.to?.address?.city && invoice.to?.address?.country ? ', ' : ''}{invoice.to?.address?.country}</Text>
+            </View>
           </View>
-          {!!invoice.discountAmount && (
+
+          <View style={styles.table}>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.col1, styles.th]}>Description</Text>
+              <Text style={[styles.col2, styles.th]}>Qty</Text>
+              <Text style={[styles.col3, styles.th]}>Price</Text>
+              <Text style={[styles.col4, styles.th]}>Amount</Text>
+            </View>
+            {invoice.lineItems?.map((item, i) => (
+              <View key={i} style={styles.tr}>
+                <Text style={[styles.col1, styles.td]}>{item.description}</Text>
+                <Text style={[styles.col2, styles.td]}>{item.quantity}</Text>
+                <Text style={[styles.col3, styles.td]}>{item.unitPrice}</Text>
+                <Text style={[styles.col4, styles.td]}>{item.amount?.toFixed(2)}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.totals}>
             <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Discount</Text>
-              <Text style={styles.totalValue}>-{invoice.currency} {invoice.discountAmount?.toFixed(2)}</Text>
+              <Text style={styles.totalLabel}>Subtotal</Text>
+              <Text style={styles.totalValue}>{invoice.currency} {invoice.subtotal?.toFixed(2)}</Text>
             </View>
-          )}
-          <View style={styles.grandTotalRow}>
-            <Text style={styles.grandTotalLabel}>Total</Text>
-            <Text style={styles.grandTotalValue}>{invoice.currency} {invoice.total?.toFixed(2)}</Text>
+            {!!invoice.discountAmount && (
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Discount</Text>
+                <Text style={styles.totalValue}>-{invoice.currency} {invoice.discountAmount?.toFixed(2)}</Text>
+              </View>
+            )}
+            <View style={styles.grandTotalRow}>
+              <Text style={styles.grandTotalLabel}>Total</Text>
+              <Text style={[styles.grandTotalValue, { color: themeColor }]}>{invoice.currency} {invoice.total?.toFixed(2)}</Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>Thank you for your business.</Text>
-        <Text style={styles.footerText}>{invoice.from?.website}</Text>
-      </View>
-    </Page>
-  </Document>
-);
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Thank you for your business.</Text>
+          <Text style={styles.footerText}>{invoice.from?.website}</Text>
+        </View>
+      </Page>
+    </Document>
+  );
+};

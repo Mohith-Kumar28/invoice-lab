@@ -7,7 +7,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export default function InvoicePage() {
   return (
-    <div className="flex-1 flex flex-col md:flex-row h-[calc(100vh-3.5rem)] overflow-hidden relative">
+    <div className="fixed inset-0 top-14 flex flex-col md:flex-row overflow-hidden bg-background">
       {/* Left Panel - Form */}
       <div className="w-full md:w-1/2 h-full flex flex-col border-r border-border bg-muted/10">
         <GlobalActions />
@@ -20,7 +20,7 @@ export default function InvoicePage() {
       <div className="hidden md:flex w-full md:w-1/2 h-full bg-muted/30 items-center justify-center p-6 overflow-hidden">
         <InvoicePreview />
       </div>
-
+      
       {/* Mobile Floating Preview Button */}
       <div className="md:hidden fixed bottom-4 right-4 z-50">
         <Sheet>

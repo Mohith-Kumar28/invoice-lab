@@ -7,6 +7,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { HexColorPicker } from "react-colorful";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DatePicker } from "@/components/shared/DatePicker";
@@ -23,7 +26,7 @@ export function InvoiceForm() {
         <h1 className="text-2xl font-bold tracking-tight">Invoice Details</h1>
       </div>
 
-      <Accordion multiple defaultValue={["section-1", "section-2", "section-3", "section-4", "section-5"]} className="w-full">
+      <Accordion multiple defaultValue={["section-1", "section-2", "section-3", "section-4", "section-5", "section-6"]} className="w-full">
         {/* SECTION 1: Invoice Details */}
         <AccordionItem value="section-1" className="bg-card rounded-xl border px-4 mb-4 shadow-sm">
           <AccordionTrigger className="hover:no-underline font-semibold text-lg py-4">
@@ -31,22 +34,6 @@ export function InvoiceForm() {
           </AccordionTrigger>
           <AccordionContent className="pb-4 pt-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2 md:col-span-2">
-                <Label>Template Style</Label>
-                <Select
-                  value={invoice.template || "modern"}
-                  onValueChange={(val) => updateInvoice({ template: val as TemplateKey })}
-                >
-                  <SelectTrigger className="w-full sm:w-[200px]">
-                    <SelectValue placeholder="Select template" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="modern">Modern</SelectItem>
-                    <SelectItem value="classic">Classic</SelectItem>
-                    <SelectItem value="minimal">Minimal</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="invoiceNumber">Invoice Number</Label>
                 <Input
@@ -217,6 +204,74 @@ export function InvoiceForm() {
                   value={invoice.shippingFee || 0}
                   onChange={(e) => updateInvoice({ shippingFee: Number(e.target.value) })}
                 />
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* SECTION 6: Design & Theme */}
+        <AccordionItem value="section-6" className="bg-card rounded-xl border px-4 mb-4 shadow-sm">
+          <AccordionTrigger className="hover:no-underline font-semibold text-lg py-4">
+            6. Design & Theme
+          </AccordionTrigger>
+          <AccordionContent className="pb-4 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <Label className="text-base">Template Style</Label>
+                <Select
+                  value={invoice.template || "modern"}
+                  onValueChange={(val) => updateInvoice({ template: val as TemplateKey })}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="modern">Modern</SelectItem>
+                    <SelectItem value="classic">Classic</SelectItem>
+                    <SelectItem value="minimal">Minimal</SelectItem>
+                    <SelectItem value="bold">Bold</SelectItem>
+                    <SelectItem value="creative">Creative</SelectItem>
+                    <SelectItem value="corporate">Corporate</SelectItem>
+                    <SelectItem value="freelancer">Freelancer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-4">
+                <Label className="text-base">Color Theme</Label>
+                <Popover>
+                  <PopoverTrigger render={
+                    <Button variant="outline" className="w-[140px] justify-start text-left font-normal px-3">
+                      <div 
+                        className="w-4 h-4 rounded-full border border-border mr-2" 
+                        style={{ backgroundColor: invoice.colorTheme || "#2563eb" }}
+                      />
+                      <span className="font-mono text-sm uppercase text-muted-foreground">
+                        {invoice.colorTheme || "#2563eb"}
+                      </span>
+                    </Button>
+                  } />
+                  <PopoverContent className="w-auto p-3 flex flex-col gap-3" align="start">
+                    <HexColorPicker 
+                      color={invoice.colorTheme || "#2563eb"} 
+                      onChange={(color) => updateInvoice({ colorTheme: color })} 
+                    />
+                    <div className="flex items-center gap-2">
+                      <div className="text-muted-foreground text-xs font-semibold">HEX</div>
+                      <Input 
+                        className="h-8 font-mono text-xs uppercase" 
+                        value={invoice.colorTheme || "#2563eb"}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val.startsWith('#') && (val.length === 4 || val.length === 7)) {
+                            updateInvoice({ colorTheme: val });
+                          } else {
+                            updateInvoice({ colorTheme: val });
+                          }
+                        }}
+                      />
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           </AccordionContent>

@@ -8,7 +8,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Footer } from "@/components/layout/Footer";
 
 export default function AboutPage() {
   return (
@@ -114,7 +113,6 @@ export default function AboutPage() {
           </Accordion>
         </div>
       </section>
-      <Footer />
     </div>
   );
 }
