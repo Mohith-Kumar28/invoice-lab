@@ -227,7 +227,9 @@ export function Section1Details() {
             }}
           >
             <SelectTrigger className="w-[92px]">
-              <SelectValue placeholder="+3d" />
+              <span className="text-sm">
+                {duePreset === "custom" ? "Custom" : `+${duePreset}d`}
+              </span>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="3">+3d</SelectItem>

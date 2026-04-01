@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useInvoiceStore } from "@/store/invoice.store";
 import {
   Accordion,
@@ -21,6 +22,24 @@ import {
 
 export function InvoiceForm() {
   const { invoice } = useInvoiceStore();
+  const allSections = [
+    "section-1",
+    "section-2",
+    "section-3",
+    "section-4",
+    "section-5",
+    "section-6",
+    "section-7",
+    "section-8",
+    "section-9",
+  ];
+  const [openSections, setOpenSections] = useState<string[]>(allSections);
+
+  useEffect(() => {
+    const handler = () => setOpenSections(allSections);
+    window.addEventListener("invoice:showErrors", handler);
+    return () => window.removeEventListener("invoice:showErrors", handler);
+  }, []);
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
@@ -28,7 +47,12 @@ export function InvoiceForm() {
         <h1 className="text-2xl font-bold tracking-tight">Invoice Details</h1>
       </div>
 
-      <Accordion multiple defaultValue={["section-1", "section-2", "section-3", "section-4", "section-5", "section-6", "section-7", "section-8", "section-9"]} className="w-full space-y-12">
+      <Accordion
+        multiple
+        value={openSections}
+        onValueChange={(val) => setOpenSections(val as string[])}
+        className="w-full space-y-12"
+      >
         {/* SECTION 1: Invoice Details */}
         <AccordionItem value="section-1" className="bg-card rounded-xl border px-4 shadow-sm">
           <AccordionTrigger className="hover:no-underline font-semibold text-lg py-4">

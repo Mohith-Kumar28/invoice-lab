@@ -65,6 +65,7 @@ export function GlobalActions() {
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
+      window.dispatchEvent(new CustomEvent("invoice:showErrors"));
       const focusMap: Record<string, string> = {
         invoiceNumber: "invoiceNumber",
         title: "invoiceTitlePreset",
@@ -74,6 +75,7 @@ export function GlobalActions() {
         "from.businessName": "fromBusinessName",
         "from.email": "fromEmail",
         "to.businessName": "toBusinessName",
+        lineItems: "lineItemsSection",
       };
       const firstKey = Object.keys(nextErrors)[0];
       const elId = focusMap[firstKey];
@@ -85,16 +87,23 @@ export function GlobalActions() {
     }
 
     clearErrors();
-    const SelectedTemplate = templates[(invoice.template as TemplateKey) || "modern"] || templates.modern;
-    const blob = await pdf(<SelectedTemplate invoice={invoice} />).toBlob();
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${invoice.invoiceNumber || 'invoice'}_${invoice.to?.businessName || 'client'}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    try {
+      const SelectedTemplate = templates[(invoice.template as TemplateKey) || "modern"] || templates.modern;
+      const blob = await pdf(<SelectedTemplate invoice={invoice} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${invoice.invoiceNumber || "invoice"}_${invoice.to?.businessName || "client"}.pdf`;
+      document.body.appendChild(link);
+      setTimeout(() => {
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 0);
+    } catch {
+      setErrors({ general: "Failed to generate PDF. Please try again." });
+      window.dispatchEvent(new CustomEvent("invoice:showErrors"));
+    }
   };
 
   return (

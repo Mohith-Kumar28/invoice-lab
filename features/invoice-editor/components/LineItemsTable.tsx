@@ -3,7 +3,7 @@
 import { useInvoiceStore } from "@/store/invoice.store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { calculateLineItemAmount } from "@/lib/invoice-calculator";
 
 export function LineItemsTable() {
@@ -35,10 +35,11 @@ export function LineItemsTable() {
   };
 
   return (
-    <div className="space-y-4">
+    <div id="lineItemsSection" className="space-y-4">
       {errors.lineItems ? (
-        <div className="text-sm text-destructive border border-destructive/30 bg-destructive/5 rounded-lg p-3">
-          {errors.lineItems}
+        <div className="text-sm text-secondary-foreground border border-secondary bg-secondary rounded-lg p-3 flex items-start gap-2">
+          <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+          <div>{errors.lineItems}</div>
         </div>
       ) : null}
       <div className="overflow-x-auto">
