@@ -19,7 +19,13 @@ export function Header() {
 
         <nav className="flex items-center space-x-4 sm:space-x-6 text-sm font-medium">
           <Link
-            href="/about"
+            href="/invoice-generator"
+            className="transition-colors hover:text-foreground/80 text-foreground/60"
+          >
+            Invoice Generator
+          </Link>
+          <Link
+            href="/"
             className="transition-colors hover:text-foreground/80 text-foreground/60"
           >
             About
