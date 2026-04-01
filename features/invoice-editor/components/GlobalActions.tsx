@@ -4,19 +4,43 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useInvoiceStore } from "@/store/invoice.store";
 import { useSavedInvoicesStore } from "@/store/saved-invoices.store";
-import { FileDown, FilePlus, Archive, Check, Loader2, RotateCcw } from "lucide-react";
+import { FileDown, FilePlus, Archive, Check, Loader2 } from "lucide-react";
 import { Invoice } from "@/types/invoice.types";
 import { pdf } from '@react-pdf/renderer';
 import { templates, TemplateKey } from "@/features/templates/renderers";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { InvoiceList } from "@/features/saved-invoices/components/InvoiceList";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export function GlobalActions() {
   const { invoice, resetInvoice, updateInvoice, setErrors, clearErrors } = useInvoiceStore();
-  const { saveInvoice } = useSavedInvoicesStore();
+  const { saveInvoice, invoices } = useSavedInvoicesStore();
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
-  const [resetOpen, setResetOpen] = useState(false);
+
+  const getNextInvoiceNumber = () => {
+    let max = 0;
+    let prefix = "INV-";
+    let pad = 4;
+
+    for (const inv of invoices) {
+      const s = String(inv.invoiceNumber || "").trim();
+      if (!s) continue;
+      const m = s.match(/^(.*?)(\d+)\s*$/);
+      if (!m) continue;
+      const p = m[1];
+      const n = Number.parseInt(m[2], 10);
+      if (!Number.isFinite(n)) continue;
+      if (n >= max) {
+        max = n;
+        prefix = p || prefix;
+        pad = Math.max(pad, m[2].length);
+      } else {
+        pad = Math.max(pad, m[2].length);
+      }
+    }
+
+    const next = max + 1;
+    return `${prefix}${String(next).padStart(pad, "0")}`;
+  };
 
   useEffect(() => {
     if (!invoice.id) {
@@ -89,11 +113,32 @@ export function GlobalActions() {
     clearErrors();
     try {
       const SelectedTemplate = templates[(invoice.template as TemplateKey) || "modern"] || templates.modern;
-      const blob = await pdf(<SelectedTemplate invoice={invoice} />).toBlob();
+      const resolveCssVarColor = (varName: string) => {
+        if (typeof document === "undefined") return undefined;
+        const el = document.createElement("div");
+        el.style.position = "absolute";
+        el.style.left = "-9999px";
+        el.style.top = "-9999px";
+        el.style.color = `var(${varName})`;
+        document.body.appendChild(el);
+        const color = getComputedStyle(el).color;
+        document.body.removeChild(el);
+        return color || undefined;
+      };
+      const pdfBrand = {
+        primary: resolveCssVarColor("--primary") || "rgb(0, 56, 224)",
+        secondary: resolveCssVarColor("--secondary") || "rgb(255, 255, 0)",
+        accent: resolveCssVarColor("--accent") || "rgb(55, 65, 81)",
+      };
+      const blob = await pdf(<SelectedTemplate invoice={{ ...invoice, pdfBrand }} />).toBlob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${invoice.invoiceNumber || "invoice"}_${invoice.to?.businessName || "client"}.pdf`;
+      const base =
+        (invoice.pdfFileName && invoice.pdfFileName.trim()) ||
+        `${invoice.invoiceNumber || "invoice"}_${invoice.to?.businessName || "client"}`;
+      const safe = base.trim().replace(/[\\/:*?"<>|]+/g, "-");
+      link.download = safe.toLowerCase().endsWith(".pdf") ? safe : `${safe}.pdf`;
       document.body.appendChild(link);
       setTimeout(() => {
         link.click();
@@ -106,8 +151,14 @@ export function GlobalActions() {
     }
   };
 
+  const handleNew = () => {
+    const nextInvoiceNumber = getNextInvoiceNumber();
+    resetInvoice();
+    updateInvoice({ invoiceNumber: nextInvoiceNumber, createdAt: new Date() });
+  };
+
   return (
-    <div className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur border-b border-border/40 p-4 flex items-center shadow-sm overflow-x-auto gap-2 no-scrollbar shrink-0">
+    <div className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur border-b border-border/40 p-3 sm:p-4 flex items-center shadow-sm overflow-x-auto gap-2 no-scrollbar shrink-0">
       <div className="flex items-center space-x-2 shrink-0">
         <Sheet>
           <SheetTrigger render={
@@ -127,7 +178,7 @@ export function GlobalActions() {
         </Sheet>
       </div>
 
-      <div className="flex items-center space-x-2 shrink-0 ml-auto pl-2">
+      <div className="flex items-center space-x-1 sm:space-x-2 shrink-0 ml-auto pl-2">
         <div className="text-sm text-muted-foreground mr-2 flex items-center">
           {saveStatus === "saving" && (
             <>
@@ -142,41 +193,13 @@ export function GlobalActions() {
             </>
           )}
         </div>
-        <Dialog open={resetOpen} onOpenChange={setResetOpen}>
-          <DialogTrigger render={
-            <Button variant="outline">
-              <RotateCcw className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Reset</span>
-            </Button>
-          } />
-          <DialogContent showCloseButton={false}>
-            <DialogHeader>
-              <DialogTitle>Reset invoice?</DialogTitle>
-              <DialogDescription>
-                This clears the current invoice form. Saved invoices are not affected.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <DialogClose render={<Button variant="outline" />}>
-                Cancel
-              </DialogClose>
-              <Button
-                onClick={() => {
-                  resetInvoice();
-                  setResetOpen(false);
-                }}
-              >
-                Reset
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        <Button variant="outline" onClick={resetInvoice}>
+        <Button variant="secondary" onClick={handleNew}>
           <FilePlus className="h-4 w-4 sm:mr-2" />
-          <span className="hidden sm:inline">New</span>
+          <span>New</span>
         </Button>
         <Button variant="default" onClick={handleDownload}>
           <FileDown className="h-4 w-4 sm:mr-2" />
+          <span className="sm:hidden">Download</span>
           <span className="hidden sm:inline">Download PDF</span>
         </Button>
       </div>

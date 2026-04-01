@@ -81,6 +81,12 @@ export interface Invoice {
   showWatermark: boolean;
 
   upiQr?: string;
+  pdfFileName?: string;
+  pdfBrand?: {
+    primary: string;
+    secondary: string;
+    accent: string;
+  };
 
   // Metadata
   createdAt: Date;
@@ -120,6 +126,7 @@ export interface BankDetails {
   bankName?: string;
   accountName?: string;
   accountNumber?: string;
+  ifsc?: string;
   routingNumber?: string;
   swift?: string;
   iban?: string;

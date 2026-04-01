@@ -244,7 +244,7 @@ export function Section1Details() {
         <FieldError message={errors.dueDate} />
       </div>
       <div className="space-y-2">
-        <Label>Delivery Date (Optional)</Label>
+        <Label>Delivery Date</Label>
         <DatePicker
           date={invoice.deliveryDate ? new Date(invoice.deliveryDate) : undefined}
           setDate={(date: Date | undefined) => updateInvoice({ deliveryDate: date })}
@@ -810,9 +810,15 @@ export function Section6Payment() {
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="text-sm text-muted-foreground">Account Name</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">Account Holder Name</TableCell>
                     <TableCell>
                       <Input value={invoice.bankDetails?.accountName || ""} onChange={(e) => updateBank({ accountName: e.target.value })} />
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="text-sm text-muted-foreground">IFSC</TableCell>
+                    <TableCell>
+                      <Input value={invoice.bankDetails?.ifsc || ""} onChange={(e) => updateBank({ ifsc: e.target.value })} />
                     </TableCell>
                   </TableRow>
                   <TableRow>

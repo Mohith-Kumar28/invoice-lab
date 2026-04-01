@@ -14,7 +14,7 @@ export function Header() {
         </Link>
         
         <div className="hidden sm:flex text-xs text-muted-foreground items-center">
-          Made with ❤️ for freelancers & agencies
+          Made with ❤️ and AI 🤖
         </div>
 
         <nav className="flex items-center space-x-4 sm:space-x-6 text-sm font-medium">

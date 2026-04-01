@@ -143,6 +143,82 @@ function statusPill(status?: string) {
   return { bg: "#E5E7EB", fg: "#111827" };
 }
 
+function clamp(n: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, n));
+}
+
+function hexToRgb(hex: string) {
+  const m = hex.trim().match(/^#?([0-9a-fA-F]{6})$/);
+  if (!m) return null;
+  const v = m[1];
+  return {
+    r: parseInt(v.slice(0, 2), 16),
+    g: parseInt(v.slice(2, 4), 16),
+    b: parseInt(v.slice(4, 6), 16),
+  };
+}
+
+function rgbToHex(r: number, g: number, b: number) {
+  const to = (x: number) => clamp(Math.round(x), 0, 255).toString(16).padStart(2, "0");
+  return `#${to(r)}${to(g)}${to(b)}`;
+}
+
+function rgbToHsl(r: number, g: number, b: number) {
+  const rr = r / 255;
+  const gg = g / 255;
+  const bb = b / 255;
+  const max = Math.max(rr, gg, bb);
+  const min = Math.min(rr, gg, bb);
+  const d = max - min;
+  let h = 0;
+  const l = (max + min) / 2;
+  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+
+  if (d !== 0) {
+    if (max === rr) h = ((gg - bb) / d) % 6;
+    else if (max === gg) h = (bb - rr) / d + 2;
+    else h = (rr - gg) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+
+  return { h, s, l };
+}
+
+function hslToRgb(h: number, s: number, l: number) {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  let rr = 0;
+  let gg = 0;
+  let bb = 0;
+  if (h < 60) [rr, gg, bb] = [c, x, 0];
+  else if (h < 120) [rr, gg, bb] = [x, c, 0];
+  else if (h < 180) [rr, gg, bb] = [0, c, x];
+  else if (h < 240) [rr, gg, bb] = [0, x, c];
+  else if (h < 300) [rr, gg, bb] = [x, 0, c];
+  else [rr, gg, bb] = [c, 0, x];
+  return {
+    r: (rr + m) * 255,
+    g: (gg + m) * 255,
+    b: (bb + m) * 255,
+  };
+}
+
+function deriveBrandColors(primaryHex: string) {
+  const rgb = hexToRgb(primaryHex) || hexToRgb("#0038e0");
+  if (!rgb) return { primary: "#0038e0", secondary: "#facc15", accent: "#111827" };
+  const { h, s, l } = rgbToHsl(rgb.r, rgb.g, rgb.b);
+  const s2 = clamp(s * 1.05, 0, 1);
+  const secondaryRgb = hslToRgb((h + 45) % 360, s2, clamp(l, 0.35, 0.6));
+  const accentRgb = hslToRgb((h + 200) % 360, clamp(s * 0.75, 0, 1), clamp(l * 0.28, 0.12, 0.22));
+  return {
+    primary: rgbToHex(rgb.r, rgb.g, rgb.b),
+    secondary: rgbToHex(secondaryRgb.r, secondaryRgb.g, secondaryRgb.b),
+    accent: rgbToHex(accentRgb.r, accentRgb.g, accentRgb.b),
+  };
+}
+
 export function InvoiceTemplate({
   invoice,
   variant,
@@ -152,6 +228,8 @@ export function InvoiceTemplate({
 }) {
   const themeColor = invoice.colorTheme || "#1a365d";
   const t = getTokens(variant, themeColor);
+  const brand = deriveBrandColors(themeColor);
+  const stripe = invoice.pdfBrand || brand;
 
   const hasNotes = !!invoice.notes;
   const hasTerms = !!invoice.terms;
@@ -182,6 +260,17 @@ export function InvoiceTemplate({
       fontFamily: "Helvetica",
       paddingTop: 12,
     },
+    topStripe: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      height: 12,
+      flexDirection: "row",
+    },
+    stripePrimary: { flex: 6 },
+    stripeSecondary: { flex: 3 },
+    stripeAccent: { flex: 1 },
     headerBand: {
       backgroundColor: t.headerBg,
       padding: 24,
@@ -375,6 +464,11 @@ export function InvoiceTemplate({
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+        <View fixed style={styles.topStripe}>
+          <View style={[styles.stripePrimary, { backgroundColor: stripe.primary }]} />
+          <View style={[styles.stripeSecondary, { backgroundColor: stripe.secondary }]} />
+          <View style={[styles.stripeAccent, { backgroundColor: stripe.accent }]} />
+        </View>
         {Header}
 
         <View style={styles.content}>
@@ -586,8 +680,14 @@ export function InvoiceTemplate({
                     )}
                     {paymentMode === "bank" && bank?.accountName && (
                       <View style={styles.kvRow}>
-                        <Text style={styles.kvKey}>Name</Text>
+                        <Text style={styles.kvKey}>Account Holder</Text>
                         <Text style={styles.kvVal}>{bank.accountName}</Text>
+                      </View>
+                    )}
+                    {paymentMode === "bank" && bank?.ifsc && (
+                      <View style={styles.kvRow}>
+                        <Text style={styles.kvKey}>IFSC</Text>
+                        <Text style={styles.kvVal}>{bank.ifsc}</Text>
                       </View>
                     )}
                     {paymentMode === "bank" && bank?.accountNumber && (

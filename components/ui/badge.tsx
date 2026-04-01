@@ -13,10 +13,10 @@ const badgeVariants = cva(
         default: "bg-primary text-primary-foreground border-transparent",
         secondary: "bg-muted text-foreground border-transparent",
         outline: "text-foreground border-border",
-        success: "bg-emerald-600/15 text-emerald-700 border-emerald-600/25 dark:text-emerald-400",
-        warning: "bg-amber-500/15 text-amber-700 border-amber-500/25 dark:text-amber-400",
-        destructive: "bg-destructive/15 text-destructive border-destructive/25",
-        info: "bg-sky-500/15 text-sky-700 border-sky-500/25 dark:text-sky-400",
+        success: "bg-emerald-600 text-white border-transparent",
+        warning: "bg-amber-500 text-black border-transparent",
+        destructive: "bg-destructive text-destructive-foreground border-transparent",
+        info: "bg-sky-600 text-white border-transparent",
       },
     },
     defaultVariants: {
@@ -34,4 +34,3 @@ function Badge({
 }
 
 export { Badge, badgeVariants };
-

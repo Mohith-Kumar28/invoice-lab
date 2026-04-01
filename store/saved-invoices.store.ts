@@ -38,9 +38,9 @@ export const useSavedInvoicesStore = create<SavedInvoicesState>()(
         if (existingIndex >= 0) {
           const updated = [...state.invoices];
           updated[existingIndex] = { ...invoiceToSave, updatedAt: new Date() };
-          return { invoices: updated };
+          return { invoices: updated.slice(0, 50) };
         }
-        return { invoices: [{ ...invoiceToSave, createdAt: new Date(), updatedAt: new Date() }, ...state.invoices] };
+        return { invoices: [{ ...invoiceToSave, createdAt: new Date(), updatedAt: new Date() }, ...state.invoices].slice(0, 50) };
       }),
       deleteInvoice: (id) => set((state) => ({
         invoices: state.invoices.filter((i) => i.id !== id),
@@ -51,7 +51,7 @@ export const useSavedInvoicesStore = create<SavedInvoicesState>()(
         // Merge without duplicates based on ID
         const currentIds = new Set(state.invoices.map(i => i.id));
         const toAdd = newInvoices.filter(i => !currentIds.has(i.id));
-        return { invoices: [...state.invoices, ...toAdd] };
+        return { invoices: [...state.invoices, ...toAdd].slice(0, 50) };
       }),
     }),
     {
