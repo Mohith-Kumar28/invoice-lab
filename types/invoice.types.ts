@@ -10,7 +10,15 @@ export interface Invoice {
   deliveryDate?: Date;
   poNumber?: string;
   currency: string;
-  status?: "draft" | "sent" | "paid" | "overdue" | "cancelled" | "partial" | "refunded" | "void";
+  status?:
+    | "draft"
+    | "sent"
+    | "paid"
+    | "overdue"
+    | "cancelled"
+    | "partial"
+    | "refunded"
+    | "void";
 
   // Section 2: From (Business/Sender)
   from: {
@@ -46,7 +54,7 @@ export interface Invoice {
   taxLines: TaxLine[]; // support multiple tax lines (GST, VAT, etc.)
   shippingFee: number;
   total: number; // computed
-  
+
   partialPayments?: PartialPayment[];
   amountPaid: number; // computed
   amountDue: number; // computed

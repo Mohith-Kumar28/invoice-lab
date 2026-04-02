@@ -15,14 +15,15 @@ const badgeVariants = cva(
         outline: "text-foreground border-border",
         success: "bg-emerald-600 text-white border-transparent",
         warning: "bg-amber-500 text-black border-transparent",
-        destructive: "bg-destructive text-destructive-foreground border-transparent",
+        destructive:
+          "bg-destructive text-destructive-foreground border-transparent",
         info: "bg-sky-600 text-white border-transparent",
       },
     },
     defaultVariants: {
       variant: "secondary",
     },
-  }
+  },
 );
 
 function Badge({
@@ -30,7 +31,9 @@ function Badge({
   variant,
   ...props
 }: HTMLAttributes<HTMLDivElement> & VariantProps<typeof badgeVariants>) {
-  return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
+  return (
+    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+  );
 }
 
 export { Badge, badgeVariants };

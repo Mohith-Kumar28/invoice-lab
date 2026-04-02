@@ -10,7 +10,7 @@ export function formatNumber(value: number | undefined, locale?: string) {
 export function formatDecimal(
   value: number | undefined,
   locale?: string,
-  opts?: { minFractionDigits?: number; maxFractionDigits?: number }
+  opts?: { minFractionDigits?: number; maxFractionDigits?: number },
 ) {
   const v = typeof value === "number" && Number.isFinite(value) ? value : 0;
   const minFractionDigits = opts?.minFractionDigits ?? 2;
@@ -30,7 +30,7 @@ export function formatMoney(
   value: number | undefined,
   currency: string | undefined,
   locale?: string,
-  opts?: { minFractionDigits?: number; maxFractionDigits?: number }
+  opts?: { minFractionDigits?: number; maxFractionDigits?: number },
 ) {
   const v = typeof value === "number" && Number.isFinite(value) ? value : 0;
   const c = (currency || "").trim().toUpperCase();
@@ -54,7 +54,7 @@ export function formatMoneyPdf(
   value: number | undefined,
   currency: string | undefined,
   locale?: string,
-  opts?: { minFractionDigits?: number; maxFractionDigits?: number }
+  opts?: { minFractionDigits?: number; maxFractionDigits?: number },
 ) {
   const v = typeof value === "number" && Number.isFinite(value) ? value : 0;
   const c = (currency || "").trim().toUpperCase();
@@ -93,6 +93,9 @@ export function formatMoneyPdf(
     return c;
   })();
 
-  const num = formatDecimal(v, locale, { minFractionDigits, maxFractionDigits });
+  const num = formatDecimal(v, locale, {
+    minFractionDigits,
+    maxFractionDigits,
+  });
   return safeSymbol ? `${safeSymbol} ${num}` : num;
 }

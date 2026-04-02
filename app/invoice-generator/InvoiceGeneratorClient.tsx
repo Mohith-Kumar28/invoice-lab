@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef } from "react";
+import { ToolEditorLayout } from "@/components/tools/ToolEditorLayout";
+import { GlobalActions } from "@/features/invoice-editor/components/GlobalActions";
 import { InvoiceForm } from "@/features/invoice-editor/components/InvoiceForm";
 import { InvoicePreview } from "@/features/invoice-editor/components/InvoicePreview";
-import { GlobalActions } from "@/features/invoice-editor/components/GlobalActions";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { decodeInvoiceFromUrlParam } from "@/lib/share-invoice";
-import { useInvoiceStore } from "@/store/invoice.store";
+import { decodeInvoiceFromUrlParam } from "@/features/invoice-editor/lib/share-invoice";
+import { useInvoiceStore } from "@/features/invoice-editor/store/invoice.store";
 
 export function InvoiceGeneratorClient() {
   const router = useRouter();
@@ -31,35 +31,16 @@ export function InvoiceGeneratorClient() {
   }, [params, setInvoice, router, pathname]);
 
   return (
-    <div className="fixed inset-0 top-14 flex flex-col md:flex-row overflow-hidden bg-background">
-      <div className="w-full md:w-1/2 h-full flex flex-col border-r border-border bg-muted/10">
+    <ToolEditorLayout mobilePreviewLabel="Preview PDF">
+      <ToolEditorLayout.Actions>
         <GlobalActions />
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6">
-          <InvoiceForm />
-        </div>
-      </div>
-
-      <div className="hidden md:flex w-full md:w-1/2 h-full bg-background overflow-hidden">
+      </ToolEditorLayout.Actions>
+      <ToolEditorLayout.Form>
+        <InvoiceForm />
+      </ToolEditorLayout.Form>
+      <ToolEditorLayout.Preview>
         <InvoicePreview />
-      </div>
-
-      <div className="md:hidden fixed bottom-4 right-4 z-50">
-        <Sheet>
-          <SheetTrigger
-            render={
-              <button className="bg-primary text-primary-foreground shadow-lg rounded-full px-6 py-3 font-semibold">
-                Preview PDF
-              </button>
-            }
-          />
-          <SheetContent side="bottom" className="h-[85vh] p-0 rounded-t-xl flex flex-col">
-            <div className="flex-1 overflow-hidden bg-background">
-              <InvoicePreview />
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-    </div>
+      </ToolEditorLayout.Preview>
+    </ToolEditorLayout>
   );
 }
-

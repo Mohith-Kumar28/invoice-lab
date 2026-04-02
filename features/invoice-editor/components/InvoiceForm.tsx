@@ -1,14 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useInvoiceStore } from "@/store/invoice.store";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { LineItemsTable } from "./LineItemsTable";
 import {
   Section1Details,
   Section2From,
@@ -19,9 +17,9 @@ import {
   Section8Signature,
   Section9Design,
 } from "./FormSections";
+import { LineItemsTable } from "./LineItemsTable";
 
 export function InvoiceForm() {
-  const { invoice } = useInvoiceStore();
   const allSections = [
     "section-1",
     "section-2",
@@ -54,7 +52,10 @@ export function InvoiceForm() {
         className="w-full space-y-12"
       >
         {/* SECTION 1: Invoice Details */}
-        <AccordionItem value="section-1" className="bg-card rounded-xl border px-4 shadow-sm">
+        <AccordionItem
+          value="section-1"
+          className="bg-card rounded-xl border px-4 shadow-sm"
+        >
           <AccordionTrigger className="hover:no-underline font-semibold text-lg py-4">
             1. Invoice Details
           </AccordionTrigger>
@@ -64,7 +65,10 @@ export function InvoiceForm() {
         </AccordionItem>
 
         {/* SECTION 2: From */}
-        <AccordionItem value="section-2" className="bg-card rounded-xl border px-4 shadow-sm">
+        <AccordionItem
+          value="section-2"
+          className="bg-card rounded-xl border px-4 shadow-sm"
+        >
           <AccordionTrigger className="hover:no-underline font-semibold text-lg py-4">
             2. From (Your Business)
           </AccordionTrigger>
@@ -74,7 +78,10 @@ export function InvoiceForm() {
         </AccordionItem>
 
         {/* SECTION 3: Bill To */}
-        <AccordionItem value="section-3" className="bg-card rounded-xl border px-4 shadow-sm">
+        <AccordionItem
+          value="section-3"
+          className="bg-card rounded-xl border px-4 shadow-sm"
+        >
           <AccordionTrigger className="hover:no-underline font-semibold text-lg py-4">
             3. Bill To (Client)
           </AccordionTrigger>
@@ -84,7 +91,10 @@ export function InvoiceForm() {
         </AccordionItem>
 
         {/* SECTION 4: Line Items */}
-        <AccordionItem value="section-4" className="bg-card rounded-xl border px-4 shadow-sm">
+        <AccordionItem
+          value="section-4"
+          className="bg-card rounded-xl border px-4 shadow-sm"
+        >
           <AccordionTrigger className="hover:no-underline font-semibold text-lg py-4">
             4. Line Items
           </AccordionTrigger>
@@ -94,7 +104,10 @@ export function InvoiceForm() {
         </AccordionItem>
 
         {/* SECTION 5: Pricing & Taxes */}
-        <AccordionItem value="section-5" className="bg-card rounded-xl border px-4 shadow-sm">
+        <AccordionItem
+          value="section-5"
+          className="bg-card rounded-xl border px-4 shadow-sm"
+        >
           <AccordionTrigger className="hover:no-underline font-semibold text-lg py-4">
             5. Pricing & Taxes
           </AccordionTrigger>
@@ -104,7 +117,10 @@ export function InvoiceForm() {
         </AccordionItem>
 
         {/* SECTION 6: Payment Details */}
-        <AccordionItem value="section-6" className="bg-card rounded-xl border px-4 shadow-sm">
+        <AccordionItem
+          value="section-6"
+          className="bg-card rounded-xl border px-4 shadow-sm"
+        >
           <AccordionTrigger className="hover:no-underline font-semibold text-lg py-4">
             6. Payment Details
           </AccordionTrigger>
@@ -114,7 +130,10 @@ export function InvoiceForm() {
         </AccordionItem>
 
         {/* SECTION 7: Notes & Terms */}
-        <AccordionItem value="section-7" className="bg-card rounded-xl border px-4 shadow-sm">
+        <AccordionItem
+          value="section-7"
+          className="bg-card rounded-xl border px-4 shadow-sm"
+        >
           <AccordionTrigger className="hover:no-underline font-semibold text-lg py-4">
             7. Notes & Terms
           </AccordionTrigger>
@@ -124,7 +143,10 @@ export function InvoiceForm() {
         </AccordionItem>
 
         {/* SECTION 8: Signature */}
-        <AccordionItem value="section-8" className="bg-card rounded-xl border px-4 shadow-sm">
+        <AccordionItem
+          value="section-8"
+          className="bg-card rounded-xl border px-4 shadow-sm"
+        >
           <AccordionTrigger className="hover:no-underline font-semibold text-lg py-4">
             8. Signature
           </AccordionTrigger>
@@ -134,7 +156,10 @@ export function InvoiceForm() {
         </AccordionItem>
 
         {/* SECTION 9: Design & Theme */}
-        <AccordionItem value="section-9" className="bg-card rounded-xl border px-4 shadow-sm">
+        <AccordionItem
+          value="section-9"
+          className="bg-card rounded-xl border px-4 shadow-sm"
+        >
           <AccordionTrigger className="hover:no-underline font-semibold text-lg py-4">
             9. Design & Branding
           </AccordionTrigger>

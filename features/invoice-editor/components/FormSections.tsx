@@ -1,22 +1,30 @@
 "use client";
 
-import * as React from "react";
-import { useInvoiceStore } from "@/store/invoice.store";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { DatePicker } from "@/components/shared/DatePicker";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { HexColorPicker } from "react-colorful";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { TemplateKey } from "@/features/templates/renderers";
 import { Plus, RefreshCcw, Trash2 } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import Image from "next/image";
+import * as React from "react";
+import { HexColorPicker } from "react-colorful";
+import SignaturePad from "signature_pad";
+import { DatePicker } from "@/components/shared/DatePicker";
+import { FilePicker } from "@/components/shared/FilePicker";
 import { Badge } from "@/components/ui/badge";
-import { currencies } from "@/lib/currencies";
-import { formatMoney } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -25,7 +33,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import SignaturePad from "signature_pad";
+import { Textarea } from "@/components/ui/textarea";
+import { useInvoiceStore } from "@/features/invoice-editor/store/invoice.store";
+import type { TemplateKey } from "@/features/templates/renderers";
+import { currencies } from "@/lib/currencies";
+import { formatMoney } from "@/lib/format";
+import type { Invoice } from "@/types/invoice.types";
 
 function ReqLabel({
   children,
@@ -47,49 +60,6 @@ function FieldError({ message }: { message?: string }) {
   return <div className="text-xs text-destructive mt-1">{message}</div>;
 }
 
-function FilePicker({
-  accept,
-  onFile,
-  fileLabel,
-}: {
-  accept: string;
-  onFile: (file: File) => void;
-  fileLabel: string;
-}) {
-  const inputRef = React.useRef<HTMLInputElement | null>(null);
-  const [name, setName] = React.useState<string>("");
-
-  return (
-    <div className="flex items-center gap-3">
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (!file) return;
-          setName(file.name);
-          onFile(file);
-          e.currentTarget.value = "";
-        }}
-      />
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="bg-primary/10 text-primary hover:bg-primary/20"
-        onClick={() => inputRef.current?.click()}
-      >
-        Choose
-      </Button>
-      <div className="text-sm text-muted-foreground truncate min-w-0">
-        {name || fileLabel}
-      </div>
-    </div>
-  );
-}
-
 export function Section1Details() {
   const { invoice, updateInvoice, errors } = useInvoiceStore();
   const [duePreset, setDuePreset] = React.useState<string>("3");
@@ -103,7 +73,9 @@ export function Section1Details() {
     if (!invoice.issueDate || !invoice.dueDate) return;
     const issue = new Date(invoice.issueDate);
     const due = new Date(invoice.dueDate);
-    const diff = Math.round((due.getTime() - issue.getTime()) / (1000 * 60 * 60 * 24));
+    const diff = Math.round(
+      (due.getTime() - issue.getTime()) / (1000 * 60 * 60 * 24),
+    );
     if ([3, 7, 15, 30, 60].includes(diff)) setDuePreset(String(diff));
     else setDuePreset("custom");
   }, [invoice.issueDate, invoice.dueDate]);
@@ -116,8 +88,11 @@ export function Section1Details() {
     "DEBIT NOTE",
     "QUOTE/ESTIMATE",
   ] as const;
-  const titlePresetValue = titlePresets.includes((invoice.title || "") as any)
-    ? (invoice.title as (typeof titlePresets)[number])
+  const titleCandidate = (invoice.title || "").trim();
+  const titlePresetValue = (titlePresets as readonly string[]).includes(
+    titleCandidate,
+  )
+    ? (titleCandidate as (typeof titlePresets)[number])
     : "custom";
   const statusVariant = (s?: string) => {
     if (!s) return "secondary" as const;
@@ -125,10 +100,11 @@ export function Section1Details() {
     if (s === "overdue") return "destructive" as const;
     if (s === "sent") return "info" as const;
     if (s === "partial") return "warning" as const;
-    if (s === "cancelled" || s === "void" || s === "refunded") return "outline" as const;
+    if (s === "cancelled" || s === "void" || s === "refunded")
+      return "outline" as const;
     return "secondary" as const;
   };
-  
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="space-y-2">
@@ -146,7 +122,10 @@ export function Section1Details() {
             size="icon-sm"
             className="absolute right-1 top-1/2 -translate-y-1/2 bg-primary/10 text-primary hover:bg-primary/20"
             onClick={() => {
-              const n = String(Math.floor(Math.random() * 10000)).padStart(4, "0");
+              const n = String(Math.floor(Math.random() * 10000)).padStart(
+                4,
+                "0",
+              );
               updateInvoice({ invoiceNumber: `INV-${n}` });
             }}
           >
@@ -161,10 +140,10 @@ export function Section1Details() {
           <Select
             value={titlePresetValue}
             onValueChange={(val) => {
-              if (val === "custom") {
+              if (!val || val === "custom") {
                 updateInvoice({ title: "" });
               } else {
-                updateInvoice({ title: val as any });
+                updateInvoice({ title: val });
               }
             }}
           >
@@ -199,10 +178,12 @@ export function Section1Details() {
       <div className="space-y-2">
         <ReqLabel htmlFor="issueDateField">Issue Date</ReqLabel>
         <div id="issueDateField">
-        <DatePicker
-          date={invoice.issueDate ? new Date(invoice.issueDate) : undefined}
-          setDate={(date: Date | undefined) => updateInvoice({ issueDate: date || new Date() })}
-        />
+          <DatePicker
+            date={invoice.issueDate ? new Date(invoice.issueDate) : undefined}
+            setDate={(date: Date | undefined) =>
+              updateInvoice({ issueDate: date || new Date() })
+            }
+          />
         </div>
         <FieldError message={errors.issueDate} />
       </div>
@@ -249,8 +230,12 @@ export function Section1Details() {
       <div className="space-y-2">
         <Label>Delivery Date</Label>
         <DatePicker
-          date={invoice.deliveryDate ? new Date(invoice.deliveryDate) : undefined}
-          setDate={(date: Date | undefined) => updateInvoice({ deliveryDate: date })}
+          date={
+            invoice.deliveryDate ? new Date(invoice.deliveryDate) : undefined
+          }
+          setDate={(date: Date | undefined) =>
+            updateInvoice({ deliveryDate: date })
+          }
         />
       </div>
       <div className="space-y-2">
@@ -267,7 +252,11 @@ export function Section1Details() {
           value={invoice.currency || "INR"}
           onValueChange={(val) => updateInvoice({ currency: val || "INR" })}
         >
-          <SelectTrigger id="currencyField" className="w-full" aria-invalid={!!errors.currency}>
+          <SelectTrigger
+            id="currencyField"
+            className="w-full"
+            aria-invalid={!!errors.currency}
+          >
             <SelectValue placeholder="Currency" />
           </SelectTrigger>
           <SelectContent>
@@ -288,14 +277,17 @@ export function Section1Details() {
         <Label>Status</Label>
         <Select
           value={invoice.status ?? "none"}
-          onValueChange={(val: any) =>
-            updateInvoice({ status: val === "none" ? undefined : val })
-          }
+          onValueChange={(val) => {
+            if (val === "none") updateInvoice({ status: undefined });
+            else updateInvoice({ status: val as Invoice["status"] });
+          }}
         >
           <SelectTrigger className="w-full">
             <div className="flex items-center justify-between w-full">
               {invoice.status ? (
-                <Badge variant={statusVariant(invoice.status)}>{invoice.status.toUpperCase()}</Badge>
+                <Badge variant={statusVariant(invoice.status)}>
+                  {invoice.status.toUpperCase()}
+                </Badge>
               ) : (
                 <span className="text-muted-foreground text-sm">Optional</span>
               )}
@@ -320,8 +312,8 @@ export function Section1Details() {
 
 export function Section2From() {
   const { invoice, updateInvoice, errors } = useInvoiceStore();
-  const updateFrom = (fields: Partial<typeof invoice.from>) => {
-    updateInvoice({ from: fields as any });
+  const updateFrom = (fields: Partial<Invoice["from"]>) => {
+    updateInvoice({ from: fields });
   };
 
   const handleLogoUpload = (file: File) => {
@@ -339,14 +331,23 @@ export function Section2From() {
         <div className="flex items-center gap-4">
           {invoice.from?.logo && (
             <div className="relative w-16 h-16 rounded-md overflow-hidden border">
-              <img src={invoice.from.logo} alt="Logo" className="w-full h-full object-contain" />
+              <Image
+                src={invoice.from.logo}
+                alt="Logo"
+                fill
+                className="object-contain"
+                sizes="64px"
+                unoptimized
+              />
             </div>
           )}
           <div className="flex-1">
             <FilePicker
               accept="image/png, image/jpeg, image/jpg"
               onFile={handleLogoUpload}
-              fileLabel={invoice.from?.logo ? "Image selected" : "No file chosen"}
+              fileLabel={
+                invoice.from?.logo ? "Image selected" : "No file chosen"
+              }
             />
           </div>
           {invoice.from?.logo && (
@@ -417,12 +418,78 @@ export function Section2From() {
       <div className="space-y-2 md:col-span-2">
         <Label>Address</Label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-1">
-          <Input placeholder="Line 1" value={invoice.from?.address?.line1 || ""} onChange={(e) => updateFrom({ address: { ...invoice.from?.address, line1: e.target.value } as any })} />
-          <Input placeholder="Line 2" value={invoice.from?.address?.line2 || ""} onChange={(e) => updateFrom({ address: { ...invoice.from?.address, line2: e.target.value } as any })} />
-          <Input placeholder="City" value={invoice.from?.address?.city || ""} onChange={(e) => updateFrom({ address: { ...invoice.from?.address, city: e.target.value } as any })} />
-          <Input placeholder="State" value={invoice.from?.address?.state || ""} onChange={(e) => updateFrom({ address: { ...invoice.from?.address, state: e.target.value } as any })} />
-          <Input placeholder="Postal Code" value={invoice.from?.address?.postalCode || ""} onChange={(e) => updateFrom({ address: { ...invoice.from?.address, postalCode: e.target.value } as any })} />
-          <Input placeholder="Country" value={invoice.from?.address?.country || ""} onChange={(e) => updateFrom({ address: { ...invoice.from?.address, country: e.target.value } as any })} />
+          <Input
+            placeholder="Line 1"
+            value={invoice.from?.address?.line1 || ""}
+            onChange={(e) =>
+              updateFrom({
+                address: {
+                  ...invoice.from?.address,
+                  line1: e.target.value,
+                } as Invoice["from"]["address"],
+              })
+            }
+          />
+          <Input
+            placeholder="Line 2"
+            value={invoice.from?.address?.line2 || ""}
+            onChange={(e) =>
+              updateFrom({
+                address: {
+                  ...invoice.from?.address,
+                  line2: e.target.value,
+                } as Invoice["from"]["address"],
+              })
+            }
+          />
+          <Input
+            placeholder="City"
+            value={invoice.from?.address?.city || ""}
+            onChange={(e) =>
+              updateFrom({
+                address: {
+                  ...invoice.from?.address,
+                  city: e.target.value,
+                } as Invoice["from"]["address"],
+              })
+            }
+          />
+          <Input
+            placeholder="State"
+            value={invoice.from?.address?.state || ""}
+            onChange={(e) =>
+              updateFrom({
+                address: {
+                  ...invoice.from?.address,
+                  state: e.target.value,
+                } as Invoice["from"]["address"],
+              })
+            }
+          />
+          <Input
+            placeholder="Postal Code"
+            value={invoice.from?.address?.postalCode || ""}
+            onChange={(e) =>
+              updateFrom({
+                address: {
+                  ...invoice.from?.address,
+                  postalCode: e.target.value,
+                } as Invoice["from"]["address"],
+              })
+            }
+          />
+          <Input
+            placeholder="Country"
+            value={invoice.from?.address?.country || ""}
+            onChange={(e) =>
+              updateFrom({
+                address: {
+                  ...invoice.from?.address,
+                  country: e.target.value,
+                } as Invoice["from"]["address"],
+              })
+            }
+          />
         </div>
       </div>
     </div>
@@ -431,8 +498,8 @@ export function Section2From() {
 
 export function Section3To() {
   const { invoice, updateInvoice, errors } = useInvoiceStore();
-  const updateTo = (fields: Partial<typeof invoice.to>) => {
-    updateInvoice({ to: fields as any });
+  const updateTo = (fields: Partial<Invoice["to"]>) => {
+    updateInvoice({ to: fields });
   };
 
   const handleLogoUpload = (file: File) => {
@@ -450,7 +517,14 @@ export function Section3To() {
         <div className="flex items-center gap-4">
           {invoice.to?.logo && (
             <div className="relative w-16 h-16 rounded-md overflow-hidden border">
-              <img src={invoice.to.logo} alt="Logo" className="w-full h-full object-contain" />
+              <Image
+                src={invoice.to.logo}
+                alt="Logo"
+                fill
+                className="object-contain"
+                sizes="64px"
+                unoptimized
+              />
             </div>
           )}
           <div className="flex-1">
@@ -518,12 +592,78 @@ export function Section3To() {
       <div className="space-y-2 md:col-span-2">
         <Label>Client Address</Label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-1">
-          <Input placeholder="Line 1" value={invoice.to?.address?.line1 || ""} onChange={(e) => updateTo({ address: { ...invoice.to?.address, line1: e.target.value } as any })} />
-          <Input placeholder="Line 2" value={invoice.to?.address?.line2 || ""} onChange={(e) => updateTo({ address: { ...invoice.to?.address, line2: e.target.value } as any })} />
-          <Input placeholder="City" value={invoice.to?.address?.city || ""} onChange={(e) => updateTo({ address: { ...invoice.to?.address, city: e.target.value } as any })} />
-          <Input placeholder="State" value={invoice.to?.address?.state || ""} onChange={(e) => updateTo({ address: { ...invoice.to?.address, state: e.target.value } as any })} />
-          <Input placeholder="Postal Code" value={invoice.to?.address?.postalCode || ""} onChange={(e) => updateTo({ address: { ...invoice.to?.address, postalCode: e.target.value } as any })} />
-          <Input placeholder="Country" value={invoice.to?.address?.country || ""} onChange={(e) => updateTo({ address: { ...invoice.to?.address, country: e.target.value } as any })} />
+          <Input
+            placeholder="Line 1"
+            value={invoice.to?.address?.line1 || ""}
+            onChange={(e) =>
+              updateTo({
+                address: {
+                  ...invoice.to?.address,
+                  line1: e.target.value,
+                } as Invoice["to"]["address"],
+              })
+            }
+          />
+          <Input
+            placeholder="Line 2"
+            value={invoice.to?.address?.line2 || ""}
+            onChange={(e) =>
+              updateTo({
+                address: {
+                  ...invoice.to?.address,
+                  line2: e.target.value,
+                } as Invoice["to"]["address"],
+              })
+            }
+          />
+          <Input
+            placeholder="City"
+            value={invoice.to?.address?.city || ""}
+            onChange={(e) =>
+              updateTo({
+                address: {
+                  ...invoice.to?.address,
+                  city: e.target.value,
+                } as Invoice["to"]["address"],
+              })
+            }
+          />
+          <Input
+            placeholder="State"
+            value={invoice.to?.address?.state || ""}
+            onChange={(e) =>
+              updateTo({
+                address: {
+                  ...invoice.to?.address,
+                  state: e.target.value,
+                } as Invoice["to"]["address"],
+              })
+            }
+          />
+          <Input
+            placeholder="Postal Code"
+            value={invoice.to?.address?.postalCode || ""}
+            onChange={(e) =>
+              updateTo({
+                address: {
+                  ...invoice.to?.address,
+                  postalCode: e.target.value,
+                } as Invoice["to"]["address"],
+              })
+            }
+          />
+          <Input
+            placeholder="Country"
+            value={invoice.to?.address?.country || ""}
+            onChange={(e) =>
+              updateTo({
+                address: {
+                  ...invoice.to?.address,
+                  country: e.target.value,
+                } as Invoice["to"]["address"],
+              })
+            }
+          />
         </div>
       </div>
     </div>
@@ -534,7 +674,11 @@ export function Section5Pricing() {
   const { invoice, updateInvoice } = useInvoiceStore();
   const taxLines = invoice.taxLines || [];
 
-  const addTaxLine = (preset?: { name: string; rate: number; compound: boolean }) => {
+  const addTaxLine = (preset?: {
+    name: string;
+    rate: number;
+    compound: boolean;
+  }) => {
     const next = [
       ...taxLines,
       {
@@ -545,19 +689,22 @@ export function Section5Pricing() {
         amount: 0,
       },
     ];
-    updateInvoice({ taxLines: next as any });
+    updateInvoice({ taxLines: next });
   };
 
-  const updateTaxLine = (id: string, patch: Partial<(typeof taxLines)[number]>) => {
+  const updateTaxLine = (
+    id: string,
+    patch: Partial<(typeof taxLines)[number]>,
+  ) => {
     const next = taxLines.map((t) => (t.id === id ? { ...t, ...patch } : t));
-    updateInvoice({ taxLines: next as any });
+    updateInvoice({ taxLines: next });
   };
 
   const removeTaxLine = (id: string) => {
     const next = taxLines.filter((t) => t.id !== id);
-    updateInvoice({ taxLines: next as any });
+    updateInvoice({ taxLines: next });
   };
-  
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -565,7 +712,11 @@ export function Section5Pricing() {
           <Label>Discount Type</Label>
           <Select
             value={invoice.discountType || "percentage"}
-            onValueChange={(val: any) => updateInvoice({ discountType: val })}
+            onValueChange={(val) => {
+              if (val === "percentage" || val === "fixed") {
+                updateInvoice({ discountType: val });
+              }
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Discount Type" />
@@ -581,7 +732,9 @@ export function Section5Pricing() {
           <Input
             type="number"
             value={invoice.discountValue || 0}
-            onChange={(e) => updateInvoice({ discountValue: parseFloat(e.target.value) || 0 })}
+            onChange={(e) =>
+              updateInvoice({ discountValue: parseFloat(e.target.value) || 0 })
+            }
           />
         </div>
         <div className="space-y-2">
@@ -589,7 +742,9 @@ export function Section5Pricing() {
           <Input
             type="number"
             value={invoice.shippingFee || 0}
-            onChange={(e) => updateInvoice({ shippingFee: parseFloat(e.target.value) || 0 })}
+            onChange={(e) =>
+              updateInvoice({ shippingFee: parseFloat(e.target.value) || 0 })
+            }
           />
         </div>
         <div className="space-y-2">
@@ -597,7 +752,9 @@ export function Section5Pricing() {
           <Input
             type="number"
             value={invoice.amountPaid || 0}
-            onChange={(e) => updateInvoice({ amountPaid: parseFloat(e.target.value) || 0 })}
+            onChange={(e) =>
+              updateInvoice({ amountPaid: parseFloat(e.target.value) || 0 })
+            }
           />
         </div>
       </div>
@@ -606,13 +763,20 @@ export function Section5Pricing() {
         <div className="flex items-center justify-between gap-3">
           <Label className="text-base">Tax Lines</Label>
           <div className="flex items-center gap-2">
-            <Select value="" onValueChange={(val) => {
-              if (val === "gst18") addTaxLine({ name: "GST", rate: 18, compound: false });
-              if (val === "vat20") addTaxLine({ name: "VAT", rate: 20, compound: false });
-              if (val === "service5") addTaxLine({ name: "Service Tax", rate: 5, compound: false });
-              if (val === "hst13") addTaxLine({ name: "HST", rate: 13, compound: false });
-              if (val === "custom") addTaxLine();
-            }}>
+            <Select
+              value=""
+              onValueChange={(val) => {
+                if (val === "gst18")
+                  addTaxLine({ name: "GST", rate: 18, compound: false });
+                if (val === "vat20")
+                  addTaxLine({ name: "VAT", rate: 20, compound: false });
+                if (val === "service5")
+                  addTaxLine({ name: "Service Tax", rate: 5, compound: false });
+                if (val === "hst13")
+                  addTaxLine({ name: "HST", rate: 13, compound: false });
+                if (val === "custom") addTaxLine();
+              }}
+            >
               <SelectTrigger className="w-[180px] bg-primary/10 text-primary hover:bg-primary/20">
                 <div className="flex items-center gap-2">
                   <Plus className="h-4 w-4 text-primary" />
@@ -651,21 +815,29 @@ export function Section5Pricing() {
                     <TableCell>
                       <Input
                         value={t.name || ""}
-                        onChange={(e) => updateTaxLine(t.id, { name: e.target.value })}
+                        onChange={(e) =>
+                          updateTaxLine(t.id, { name: e.target.value })
+                        }
                       />
                     </TableCell>
                     <TableCell className="text-right">
                       <Input
                         type="number"
                         value={t.rate || 0}
-                        onChange={(e) => updateTaxLine(t.id, { rate: parseFloat(e.target.value) || 0 })}
+                        onChange={(e) =>
+                          updateTaxLine(t.id, {
+                            rate: parseFloat(e.target.value) || 0,
+                          })
+                        }
                         className="text-right"
                       />
                     </TableCell>
                     <TableCell>
                       <Switch
                         checked={t.compound ?? false}
-                        onCheckedChange={(checked: boolean) => updateTaxLine(t.id, { compound: checked })}
+                        onCheckedChange={(checked: boolean) =>
+                          updateTaxLine(t.id, { compound: checked })
+                        }
                       />
                     </TableCell>
                     <TableCell className="text-right">
@@ -704,7 +876,9 @@ export function Section5Pricing() {
               </div>
               {(invoice.taxLines || []).map((t, i) => (
                 <div key={t.id || i} className="flex justify-between gap-6">
-                  <span>{t.name} ({t.rate}%)</span>
+                  <span>
+                    {t.name} ({t.rate}%)
+                  </span>
                   <span className="font-medium text-foreground">
                     {formatMoney(t.amount || 0, invoice.currency)}
                   </span>
@@ -739,11 +913,16 @@ export function Section5Pricing() {
 
 export function Section6Payment() {
   const { invoice, updateInvoice } = useInvoiceStore();
-  const updateBank = (fields: Partial<NonNullable<typeof invoice.bankDetails>>) => {
-    updateInvoice({ bankDetails: { ...(invoice.bankDetails || {}), ...fields } });
+  const updateBank = (
+    fields: Partial<NonNullable<typeof invoice.bankDetails>>,
+  ) => {
+    updateInvoice({
+      bankDetails: { ...(invoice.bankDetails || {}), ...fields },
+    });
   };
   const paymentMode =
-    invoice.paymentMode || (invoice.paymentLink ? "url" : invoice.bankDetails?.upi ? "upi" : "bank");
+    invoice.paymentMode ||
+    (invoice.paymentLink ? "url" : invoice.bankDetails?.upi ? "upi" : "bank");
   const setMode = (mode: "upi" | "bank" | "url") => {
     if (mode === "upi") {
       updateInvoice({
@@ -810,19 +989,25 @@ export function Section6Payment() {
             <TableBody>
               {paymentMode === "url" && (
                 <TableRow>
-                  <TableCell className="text-sm text-muted-foreground">Payment URL</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    Payment URL
+                  </TableCell>
                   <TableCell>
                     <Input
                       placeholder="https://..."
                       value={invoice.paymentLink || ""}
-                      onChange={(e) => updateInvoice({ paymentLink: e.target.value })}
+                      onChange={(e) =>
+                        updateInvoice({ paymentLink: e.target.value })
+                      }
                     />
                   </TableCell>
                 </TableRow>
               )}
               {paymentMode === "upi" && (
                 <TableRow>
-                  <TableCell className="text-sm text-muted-foreground">UPI ID</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    UPI ID
+                  </TableCell>
                   <TableCell>
                     <Input
                       placeholder="name@bank"
@@ -835,45 +1020,88 @@ export function Section6Payment() {
               {paymentMode === "bank" && (
                 <>
                   <TableRow>
-                    <TableCell className="text-sm text-muted-foreground">Bank Name</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      Bank Name
+                    </TableCell>
                     <TableCell>
-                      <Input value={invoice.bankDetails?.bankName || ""} onChange={(e) => updateBank({ bankName: e.target.value })} />
+                      <Input
+                        value={invoice.bankDetails?.bankName || ""}
+                        onChange={(e) =>
+                          updateBank({ bankName: e.target.value })
+                        }
+                      />
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="text-sm text-muted-foreground">Account Holder Name</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      Account Holder Name
+                    </TableCell>
                     <TableCell>
-                      <Input value={invoice.bankDetails?.accountName || ""} onChange={(e) => updateBank({ accountName: e.target.value })} />
+                      <Input
+                        value={invoice.bankDetails?.accountName || ""}
+                        onChange={(e) =>
+                          updateBank({ accountName: e.target.value })
+                        }
+                      />
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="text-sm text-muted-foreground">IFSC</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      IFSC
+                    </TableCell>
                     <TableCell>
-                      <Input value={invoice.bankDetails?.ifsc || ""} onChange={(e) => updateBank({ ifsc: e.target.value })} />
+                      <Input
+                        value={invoice.bankDetails?.ifsc || ""}
+                        onChange={(e) => updateBank({ ifsc: e.target.value })}
+                      />
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="text-sm text-muted-foreground">Account Number</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      Account Number
+                    </TableCell>
                     <TableCell>
-                      <Input value={invoice.bankDetails?.accountNumber || ""} onChange={(e) => updateBank({ accountNumber: e.target.value })} />
+                      <Input
+                        value={invoice.bankDetails?.accountNumber || ""}
+                        onChange={(e) =>
+                          updateBank({ accountNumber: e.target.value })
+                        }
+                      />
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="text-sm text-muted-foreground">Routing / Sort Code</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      Routing / Sort Code
+                    </TableCell>
                     <TableCell>
-                      <Input value={invoice.bankDetails?.routingNumber || ""} onChange={(e) => updateBank({ routingNumber: e.target.value })} />
+                      <Input
+                        value={invoice.bankDetails?.routingNumber || ""}
+                        onChange={(e) =>
+                          updateBank({ routingNumber: e.target.value })
+                        }
+                      />
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="text-sm text-muted-foreground">SWIFT / BIC</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      SWIFT / BIC
+                    </TableCell>
                     <TableCell>
-                      <Input value={invoice.bankDetails?.swift || ""} onChange={(e) => updateBank({ swift: e.target.value })} />
+                      <Input
+                        value={invoice.bankDetails?.swift || ""}
+                        onChange={(e) => updateBank({ swift: e.target.value })}
+                      />
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="text-sm text-muted-foreground">IBAN</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      IBAN
+                    </TableCell>
                     <TableCell>
-                      <Input value={invoice.bankDetails?.iban || ""} onChange={(e) => updateBank({ iban: e.target.value })} />
+                      <Input
+                        value={invoice.bankDetails?.iban || ""}
+                        onChange={(e) => updateBank({ iban: e.target.value })}
+                      />
                     </TableCell>
                   </TableRow>
                 </>
@@ -888,26 +1116,26 @@ export function Section6Payment() {
 
 export function Section7Notes() {
   const { invoice, updateInvoice } = useInvoiceStore();
-  
+
   return (
     <div className="grid grid-cols-1 gap-6">
       <div className="space-y-2">
         <Label>Notes</Label>
-        <Textarea 
+        <Textarea
           value={invoice.notes || ""}
           onChange={(e) => updateInvoice({ notes: e.target.value })}
         />
       </div>
       <div className="space-y-2">
         <Label>Deliverables</Label>
-        <Textarea 
+        <Textarea
           value={invoice.deliverables || ""}
           onChange={(e) => updateInvoice({ deliverables: e.target.value })}
         />
       </div>
       <div className="space-y-2">
         <Label>Terms & Conditions</Label>
-        <Textarea 
+        <Textarea
           value={invoice.terms || ""}
           onChange={(e) => updateInvoice({ terms: e.target.value })}
         />
@@ -999,17 +1227,21 @@ export function Section8Signature() {
     };
     reader.readAsDataURL(file);
   };
-  
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between border p-4 rounded-lg">
         <div className="space-y-0.5">
           <Label className="text-base">Show Signature</Label>
-          <div className="text-sm text-muted-foreground">Include a signature block at the bottom of the invoice</div>
+          <div className="text-sm text-muted-foreground">
+            Include a signature block at the bottom of the invoice
+          </div>
         </div>
-        <Switch 
+        <Switch
           checked={invoice.showSignature ?? false}
-          onCheckedChange={(checked: boolean) => updateInvoice({ showSignature: checked })}
+          onCheckedChange={(checked: boolean) =>
+            updateInvoice({ showSignature: checked })
+          }
         />
       </div>
 
@@ -1017,8 +1249,8 @@ export function Section8Signature() {
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>Signatory Role / Designation</Label>
-            <Input 
-              placeholder="Owner / Manager / Authorized Signatory" 
+            <Input
+              placeholder="Owner / Manager / Authorized Signatory"
               value={invoice.signatureRole || ""}
               onChange={(e) => updateInvoice({ signatureRole: e.target.value })}
             />
@@ -1050,17 +1282,23 @@ export function Section8Signature() {
           {selectedMode === "draw" && (
             <div className="space-y-2">
               <Label>Draw Signature</Label>
-              <div ref={canvasWrapRef} className="border rounded-lg overflow-hidden bg-white h-[140px]">
+              <div
+                ref={canvasWrapRef}
+                className="border rounded-lg overflow-hidden bg-white h-[140px]"
+              >
                 <canvas ref={canvasRef} className="w-full h-full touch-none" />
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={clearDraw}>
                   Clear
                 </Button>
-                <Button size="sm" onClick={() => {
-                  saveDraw();
-                  updateInvoice({ signatureMode: "draw" });
-                }}>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    saveDraw();
+                    updateInvoice({ signatureMode: "draw" });
+                  }}
+                >
                   Use Drawn
                 </Button>
               </div>
@@ -1073,7 +1311,9 @@ export function Section8Signature() {
               <Input
                 placeholder="Your signature"
                 value={invoice.signatureTyped || ""}
-                onChange={(e) => updateInvoice({ signatureTyped: e.target.value })}
+                onChange={(e) =>
+                  updateInvoice({ signatureTyped: e.target.value })
+                }
               />
               <div className="border rounded-lg bg-muted/10 p-3 h-[140px] flex items-center justify-center">
                 <div className="font-serif italic text-3xl text-foreground/80 truncate max-w-full">
@@ -1101,13 +1341,26 @@ export function Section8Signature() {
                   handleSignatureUpload(file);
                   updateInvoice({ signatureMode: "upload" });
                 }}
-                fileLabel={invoice.signature ? "Image selected" : "No file chosen"}
+                fileLabel={
+                  invoice.signature ? "Image selected" : "No file chosen"
+                }
               />
               {invoice.signature && (
                 <div className="border rounded-lg p-3 bg-muted/20">
-                  <div className="text-xs text-muted-foreground mb-2">Selected image</div>
+                  <div className="text-xs text-muted-foreground mb-2">
+                    Selected image
+                  </div>
                   <div className="flex items-center justify-between gap-4">
-                    <img src={invoice.signature} alt="Signature" className="h-12 object-contain bg-white rounded-md p-1 border" />
+                    <div className="relative h-12 w-32 bg-white rounded-md p-1 border overflow-hidden">
+                      <Image
+                        src={invoice.signature}
+                        alt="Signature"
+                        fill
+                        className="object-contain"
+                        sizes="128px"
+                        unoptimized
+                      />
+                    </div>
                     <Button
                       variant="ghost"
                       size="icon-sm"
@@ -1129,14 +1382,16 @@ export function Section8Signature() {
 
 export function Section9Design() {
   const { invoice, updateInvoice } = useInvoiceStore();
-  
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div className="space-y-4">
         <Label className="text-base">Template Style</Label>
         <Select
           value={invoice.template || "modern"}
-          onValueChange={(val) => updateInvoice({ template: val as TemplateKey })}
+          onValueChange={(val) =>
+            updateInvoice({ template: val as TemplateKey })
+          }
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select template" />
@@ -1156,26 +1411,36 @@ export function Section9Design() {
       <div className="space-y-4">
         <Label className="text-base">Color Theme</Label>
         <Popover>
-          <PopoverTrigger render={
-            <Button variant="outline" className="w-[140px] justify-start text-left font-normal px-3">
-              <div 
-                className="w-4 h-4 rounded-full border border-border mr-2" 
-                style={{ backgroundColor: invoice.colorTheme || "#2563eb" }}
-              />
-              <span className="font-mono text-sm uppercase text-muted-foreground">
-                {invoice.colorTheme || "#2563eb"}
-              </span>
-            </Button>
-          } />
-          <PopoverContent className="w-auto p-3 flex flex-col gap-3" align="start">
-            <HexColorPicker 
-              color={invoice.colorTheme || "#2563eb"} 
-              onChange={(color) => updateInvoice({ colorTheme: color })} 
+          <PopoverTrigger
+            render={
+              <Button
+                variant="outline"
+                className="w-[140px] justify-start text-left font-normal px-3"
+              >
+                <div
+                  className="w-4 h-4 rounded-full border border-border mr-2"
+                  style={{ backgroundColor: invoice.colorTheme || "#2563eb" }}
+                />
+                <span className="font-mono text-sm uppercase text-muted-foreground">
+                  {invoice.colorTheme || "#2563eb"}
+                </span>
+              </Button>
+            }
+          />
+          <PopoverContent
+            className="w-auto p-3 flex flex-col gap-3"
+            align="start"
+          >
+            <HexColorPicker
+              color={invoice.colorTheme || "#2563eb"}
+              onChange={(color) => updateInvoice({ colorTheme: color })}
             />
             <div className="flex items-center gap-2">
-              <div className="text-muted-foreground text-xs font-semibold">HEX</div>
-              <Input 
-                className="h-8 font-mono text-xs uppercase" 
+              <div className="text-muted-foreground text-xs font-semibold">
+                HEX
+              </div>
+              <Input
+                className="h-8 font-mono text-xs uppercase"
                 value={invoice.colorTheme || "#2563eb"}
                 onChange={(e) => {
                   const val = e.target.value;
@@ -1191,19 +1456,39 @@ export function Section9Design() {
         <Label className="text-base">Display Options</Label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="flex items-center space-x-2">
-            <Switch id="showRibbon" checked={invoice.showRibbon ?? true} onCheckedChange={(c: boolean) => updateInvoice({ showRibbon: c })} />
+            <Switch
+              id="showRibbon"
+              checked={invoice.showRibbon ?? true}
+              onCheckedChange={(c: boolean) => updateInvoice({ showRibbon: c })}
+            />
             <Label htmlFor="showRibbon">Ribbon</Label>
           </div>
           <div className="flex items-center space-x-2">
-            <Switch id="showFooter" checked={invoice.showFooter ?? true} onCheckedChange={(c: boolean) => updateInvoice({ showFooter: c })} />
+            <Switch
+              id="showFooter"
+              checked={invoice.showFooter ?? true}
+              onCheckedChange={(c: boolean) => updateInvoice({ showFooter: c })}
+            />
             <Label htmlFor="showFooter">Footer</Label>
           </div>
           <div className="flex items-center space-x-2">
-            <Switch id="showPageNumbers" checked={invoice.showPageNumbers ?? true} onCheckedChange={(c: boolean) => updateInvoice({ showPageNumbers: c })} />
+            <Switch
+              id="showPageNumbers"
+              checked={invoice.showPageNumbers ?? true}
+              onCheckedChange={(c: boolean) =>
+                updateInvoice({ showPageNumbers: c })
+              }
+            />
             <Label htmlFor="showPageNumbers">Page No</Label>
           </div>
           <div className="flex items-center space-x-2">
-            <Switch id="showWatermark" checked={invoice.showWatermark ?? false} onCheckedChange={(c: boolean) => updateInvoice({ showWatermark: c })} />
+            <Switch
+              id="showWatermark"
+              checked={invoice.showWatermark ?? false}
+              onCheckedChange={(c: boolean) =>
+                updateInvoice({ showWatermark: c })
+              }
+            />
             <Label htmlFor="showWatermark">Watermark</Label>
           </div>
         </div>

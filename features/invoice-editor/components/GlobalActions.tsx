@@ -1,24 +1,46 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { pdf } from "@react-pdf/renderer";
+import {
+  Archive,
+  Check,
+  Copy,
+  FileDown,
+  FilePlus,
+  Loader2,
+  Share2,
+} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useInvoiceStore } from "@/store/invoice.store";
-import { useSavedInvoicesStore } from "@/store/saved-invoices.store";
-import { FileDown, FilePlus, Archive, Check, Loader2, Share2, Copy } from "lucide-react";
-import { Invoice } from "@/types/invoice.types";
-import { pdf } from '@react-pdf/renderer';
-import { templates, TemplateKey } from "@/features/templates/renderers";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { InvoiceList } from "@/features/saved-invoices/components/InvoiceList";
-import { resolveCssVarColor } from "@/lib/css-vars";
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { encodeInvoiceToUrlParam } from "@/lib/share-invoice";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { encodeInvoiceToUrlParam } from "@/features/invoice-editor/lib/share-invoice";
+import { useInvoiceStore } from "@/features/invoice-editor/store/invoice.store";
+import { SavedInvoicesList } from "@/features/saved-items/invoices/SavedInvoicesList";
+import { useSavedInvoicesStore } from "@/features/saved-items/invoices/saved-invoices.store";
+import { type TemplateKey, templates } from "@/features/templates/renderers";
+import { useAutoSave } from "@/hooks/useAutoSave";
+import { resolveCssVarColor } from "@/lib/css-vars";
+import type { Invoice } from "@/types/invoice.types";
 
 export function GlobalActions() {
-  const { invoice, resetInvoice, updateInvoice, setErrors, clearErrors } = useInvoiceStore();
-  const { saveInvoice, invoices } = useSavedInvoicesStore();
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const { invoice, resetInvoice, updateInvoice, setErrors, clearErrors } =
+    useInvoiceStore();
+  const { saveItem: saveInvoice, items: invoices } = useSavedInvoicesStore();
   const [shareOpen, setShareOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
   const [copied, setCopied] = useState(false);
@@ -53,24 +75,21 @@ export function GlobalActions() {
   useEffect(() => {
     if (!invoice.id) {
       updateInvoice({ id: crypto.randomUUID(), createdAt: new Date() });
-      return;
     }
+  }, [invoice.id, updateInvoice]);
 
-    const timeoutId = setTimeout(() => {
-      setSaveStatus("saving");
-      saveInvoice({
-        ...invoice,
-        updatedAt: new Date(),
-      } as Invoice);
-      setSaveStatus("saved");
-      
-      setTimeout(() => {
-        setSaveStatus("idle");
-      }, 3000);
-    }, 3000);
+  const handleAutoSave = useCallback(
+    (inv: Partial<Invoice>) => {
+      saveInvoice(inv as Invoice);
+    },
+    [saveInvoice],
+  );
 
-    return () => clearTimeout(timeoutId);
-  }, [invoice, saveInvoice, updateInvoice]);
+  const saveStatus = useAutoSave({
+    value: invoice,
+    onSave: handleAutoSave,
+    enabled: !!invoice.id,
+  });
 
   const handleDownload = async () => {
     const nextErrors: Record<string, string> = {};
@@ -78,19 +97,24 @@ export function GlobalActions() {
     const hasEmail = !!email.trim();
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
-    if (!invoice.invoiceNumber?.trim()) nextErrors.invoiceNumber = "Invoice number is required.";
+    if (!invoice.invoiceNumber?.trim())
+      nextErrors.invoiceNumber = "Invoice number is required.";
     if (!invoice.title?.trim()) nextErrors.title = "Invoice title is required.";
     if (!invoice.issueDate) nextErrors.issueDate = "Issue date is required.";
     if (!invoice.dueDate) nextErrors.dueDate = "Due date is required.";
     if (!invoice.currency) nextErrors.currency = "Currency is required.";
-    if (!invoice.from?.businessName?.trim()) nextErrors["from.businessName"] = "Business name is required.";
+    if (!invoice.from?.businessName?.trim())
+      nextErrors["from.businessName"] = "Business name is required.";
     if (hasEmail && !emailOk) nextErrors["from.email"] = "Enter a valid email.";
-    if (!invoice.to?.businessName?.trim()) nextErrors["to.businessName"] = "Client business name is required.";
+    if (!invoice.to?.businessName?.trim())
+      nextErrors["to.businessName"] = "Client business name is required.";
 
     const items = invoice.lineItems || [];
     if (items.length === 0) {
       nextErrors.lineItems = "Add at least one line item.";
-    } else if (items.some((i) => !i.description || !String(i.description).trim())) {
+    } else if (
+      items.some((i) => !i.description || !String(i.description).trim())
+    ) {
       nextErrors.lineItems = "Each line item must have a description.";
     }
 
@@ -119,30 +143,44 @@ export function GlobalActions() {
 
     clearErrors();
     try {
-      const SelectedTemplate = templates[(invoice.template as TemplateKey) || "modern"] || templates.modern;
+      const SelectedTemplate =
+        templates[(invoice.template as TemplateKey) || "modern"] ||
+        templates.modern;
       const pdfBrand = {
         primary: resolveCssVarColor("--primary") || "rgb(0, 56, 224)",
         secondary: resolveCssVarColor("--secondary") || "rgb(255, 255, 0)",
         accent: resolveCssVarColor("--accent") || "rgb(55, 65, 81)",
       };
-      const blob = await pdf(<SelectedTemplate invoice={{ ...invoice, pdfBrand }} />).toBlob();
+      const blob = await pdf(
+        <SelectedTemplate invoice={{ ...invoice, pdfBrand }} />,
+      ).toBlob();
       const base =
-        (invoice.pdfFileName && invoice.pdfFileName.trim()) ||
+        invoice.pdfFileName?.trim() ||
         `${invoice.invoiceNumber || "invoice"}_${invoice.to?.businessName || "client"}`;
       const safe = base.trim().replace(/[\\/:*?"<>|]+/g, "-");
-      const fileName = safe.toLowerCase().endsWith(".pdf") ? safe : `${safe}.pdf`;
+      const fileName = safe.toLowerCase().endsWith(".pdf")
+        ? safe
+        : `${safe}.pdf`;
 
-      const navAny = navigator as any;
+      const nav = navigator as Navigator & {
+        canShare?: (data: ShareData) => boolean;
+        share?: (data: ShareData) => Promise<void>;
+        maxTouchPoints?: number;
+      };
       const file = new File([blob], fileName, { type: "application/pdf" });
-      const canShareFiles = typeof navAny !== "undefined" && typeof navAny.canShare === "function" && navAny.canShare({ files: [file] });
+      const canShareFiles =
+        typeof nav.canShare === "function" && nav.canShare({ files: [file] });
 
-      if (typeof navAny !== "undefined" && typeof navAny.share === "function" && canShareFiles) {
-        await navAny.share({ files: [file], title: fileName });
+      if (typeof nav.share === "function" && canShareFiles) {
+        await nav.share({ files: [file], title: fileName });
         return;
       }
 
-      const ua = typeof navigator !== "undefined" ? navigator.userAgent || "" : "";
-      const isIOS = /iPad|iPhone|iPod/.test(ua) || (ua.includes("Mac") && typeof (navigator as any).maxTouchPoints === "number" && (navigator as any).maxTouchPoints > 1);
+      const ua =
+        typeof navigator !== "undefined" ? navigator.userAgent || "" : "";
+      const isIOS =
+        /iPad|iPhone|iPod/.test(ua) ||
+        (ua.includes("Mac") && (nav.maxTouchPoints || 0) > 1);
 
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -192,10 +230,14 @@ export function GlobalActions() {
     setCopied(false);
     if (typeof navigator !== "undefined" && "share" in navigator) {
       try {
-        await (navigator as any).share({ url, title: "Invoice" });
+        const nav = navigator as Navigator & {
+          share?: (data: ShareData) => Promise<void>;
+        };
+        if (typeof nav.share === "function") {
+          await nav.share({ url, title: "Invoice" });
+        }
         return;
-      } catch {
-      }
+      } catch {}
     }
     setShareOpen(true);
   };
@@ -205,26 +247,30 @@ export function GlobalActions() {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch {
-    }
+    } catch {}
   };
 
   return (
     <div className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur border-b border-border/40 p-3 sm:p-4 flex items-center shadow-sm overflow-x-auto gap-2 no-scrollbar shrink-0">
       <div className="flex items-center space-x-2 shrink-0">
         <Sheet open={savedOpen} onOpenChange={setSavedOpen}>
-          <SheetTrigger render={
-            <Button variant="outline">
-              <Archive className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Saved Invoices</span>
-            </Button>
-          } />
-          <SheetContent side="left" className="w-[400px] sm:w-[540px] p-0 flex flex-col">
+          <SheetTrigger
+            render={
+              <Button variant="outline">
+                <Archive className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Saved Invoices</span>
+              </Button>
+            }
+          />
+          <SheetContent
+            side="left"
+            className="w-[400px] sm:w-[540px] p-0 flex flex-col"
+          >
             <SheetHeader className="p-4 border-b">
               <SheetTitle>Last 50 Invoices</SheetTitle>
             </SheetHeader>
             <div className="flex-1 overflow-hidden">
-              <InvoiceList onSelect={() => setSavedOpen(false)} />
+              <SavedInvoicesList onSelect={() => setSavedOpen(false)} />
             </div>
           </SheetContent>
         </Sheet>
@@ -258,9 +304,15 @@ export function GlobalActions() {
               <Input readOnly value={shareUrl} />
             </div>
             <DialogFooter>
-              <DialogClose render={<Button variant="outline" />}>Close</DialogClose>
+              <DialogClose render={<Button variant="outline" />}>
+                Close
+              </DialogClose>
               <Button onClick={handleCopy} variant="default">
-                {copied ? <Check className="h-4 w-4 sm:mr-2" /> : <Copy className="h-4 w-4 sm:mr-2" />}
+                {copied ? (
+                  <Check className="h-4 w-4 sm:mr-2" />
+                ) : (
+                  <Copy className="h-4 w-4 sm:mr-2" />
+                )}
                 <span>{copied ? "Copied" : "Copy link"}</span>
               </Button>
             </DialogFooter>

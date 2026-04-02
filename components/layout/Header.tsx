@@ -1,7 +1,8 @@
-import Link from 'next/link';
-import { FileText } from 'lucide-react';
-import { ThemeToggle } from '@/components/shared/ThemeToggle';
-import { APP_NAME } from '@/lib/site';
+import { FileText } from "lucide-react";
+import Link from "next/link";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
+import { APP_NAME } from "@/lib/site";
+import { TOOL_NAV_LINKS } from "@/lib/tools";
 
 export function Header() {
   return (
@@ -9,22 +10,23 @@ export function Header() {
       <div className="container flex h-14 max-w-screen-2xl items-center px-4 md:px-8 mx-auto justify-between">
         <Link href="/" className="flex items-center space-x-2">
           <FileText className="h-6 w-6 text-primary" />
-          <span className="font-bold inline-block">
-            {APP_NAME}
-          </span>
+          <span className="font-bold inline-block">{APP_NAME}</span>
         </Link>
-        
+
         <div className="hidden sm:flex text-xs text-muted-foreground items-center">
           Made with ❤️ and AI 🤖
         </div>
 
         <nav className="flex items-center space-x-4 sm:space-x-6 text-sm font-medium">
-          <Link
-            href="/invoice-generator"
-            className="transition-colors hover:text-foreground/80 text-foreground/60"
-          >
-            Invoice Generator
-          </Link>
+          {TOOL_NAV_LINKS.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="transition-colors hover:text-foreground/80 text-foreground/60"
+            >
+              {l.label}
+            </Link>
+          ))}
           <Link
             href="/"
             className="transition-colors hover:text-foreground/80 text-foreground/60"

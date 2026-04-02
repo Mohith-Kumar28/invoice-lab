@@ -1,11 +1,11 @@
 "use client";
 
-import { useInvoiceStore } from "@/store/invoice.store";
+import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertTriangle, Plus, Trash2 } from "lucide-react";
-import { calculateLineItemAmount } from "@/lib/invoice-calculator";
+import { calculateLineItemAmount } from "@/features/invoice-editor/lib/invoice-calculator";
+import { useInvoiceStore } from "@/features/invoice-editor/store/invoice.store";
 import { formatMoney } from "@/lib/format";
 
 export function LineItemsTable() {
@@ -28,7 +28,7 @@ export function LineItemsTable() {
     updateInvoice({ lineItems: updatedItems });
   };
 
-  const updateItem = (index: number, field: string, value: any) => {
+  const updateItem = (index: number, field: string, value: unknown) => {
     const updatedItems = [...(invoice.lineItems || [])];
     const item = { ...updatedItems[index], [field]: value };
     item.amount = calculateLineItemAmount(item);
@@ -63,14 +63,18 @@ export function LineItemsTable() {
                     <Input
                       placeholder="Item name"
                       value={item.description}
-                      onChange={(e) => updateItem(index, "description", e.target.value)}
+                      onChange={(e) =>
+                        updateItem(index, "description", e.target.value)
+                      }
                     />
                     <Textarea
                       placeholder="Description (optional)"
                       rows={2}
                       className="min-h-[64px] resize-y"
                       value={item.details || ""}
-                      onChange={(e) => updateItem(index, "details", e.target.value)}
+                      onChange={(e) =>
+                        updateItem(index, "details", e.target.value)
+                      }
                     />
                   </div>
                 </td>
@@ -81,7 +85,9 @@ export function LineItemsTable() {
                     step="1"
                     className="text-right"
                     value={item.quantity}
-                    onChange={(e) => updateItem(index, "quantity", Number(e.target.value))}
+                    onChange={(e) =>
+                      updateItem(index, "quantity", Number(e.target.value))
+                    }
                   />
                 </td>
                 <td className="py-2 px-2">
@@ -91,7 +97,9 @@ export function LineItemsTable() {
                     step="0.01"
                     className="text-right"
                     value={item.unitPrice}
-                    onChange={(e) => updateItem(index, "unitPrice", Number(e.target.value))}
+                    onChange={(e) =>
+                      updateItem(index, "unitPrice", Number(e.target.value))
+                    }
                   />
                 </td>
                 <td className="py-2 pl-2 text-right font-medium">

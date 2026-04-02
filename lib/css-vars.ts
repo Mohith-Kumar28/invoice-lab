@@ -10,4 +10,3 @@ export function resolveCssVarColor(varName: string) {
   document.body.removeChild(el);
   return color || undefined;
 }
-

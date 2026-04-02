@@ -1,25 +1,40 @@
-import React from "react";
-import { Document, Font, Image, Link, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import {
+  Document,
+  Font,
+  Image,
+  Link,
+  Page,
+  StyleSheet,
+  Text,
+  View,
+} from "@react-pdf/renderer";
+import { formatMoneyPdf, formatNumber } from "@/lib/format";
+import { APP_NAME, SITE_URL } from "@/lib/site";
 import type { Invoice } from "@/types/invoice.types";
 import type { TemplateKey } from "./index";
-import { APP_NAME, SITE_URL } from "@/lib/site";
-import { formatMoneyPdf, formatNumber } from "@/lib/format";
 
 type Variant = TemplateKey;
 
 let registered = false;
 function ensureFont() {
   if (registered) return;
-  const origin =
-    typeof globalThis !== "undefined" &&
-    (globalThis as any).location &&
-    typeof (globalThis as any).location.origin === "string"
-      ? (globalThis as any).location.origin
-      : "";
-  const regularSrc = origin ? `${origin}/fonts/NotoSans-Regular.ttf` : "/fonts/NotoSans-Regular.ttf";
-  const boldSrc = origin ? `${origin}/fonts/NotoSans-Bold.ttf` : "/fonts/NotoSans-Bold.ttf";
-  const italicSrc = origin ? `${origin}/fonts/NotoSans-Italic.ttf` : "/fonts/NotoSans-Italic.ttf";
-  const boldItalicSrc = origin ? `${origin}/fonts/NotoSans-BoldItalic.ttf` : "/fonts/NotoSans-BoldItalic.ttf";
+  const origin = (() => {
+    const g = globalThis as unknown as { location?: { origin?: unknown } };
+    const o = g.location?.origin;
+    return typeof o === "string" ? o : "";
+  })();
+  const regularSrc = origin
+    ? `${origin}/fonts/NotoSans-Regular.ttf`
+    : "/fonts/NotoSans-Regular.ttf";
+  const boldSrc = origin
+    ? `${origin}/fonts/NotoSans-Bold.ttf`
+    : "/fonts/NotoSans-Bold.ttf";
+  const italicSrc = origin
+    ? `${origin}/fonts/NotoSans-Italic.ttf`
+    : "/fonts/NotoSans-Italic.ttf";
+  const boldItalicSrc = origin
+    ? `${origin}/fonts/NotoSans-BoldItalic.ttf`
+    : "/fonts/NotoSans-BoldItalic.ttf";
   Font.register({
     family: "NotoSans",
     fonts: [
@@ -145,7 +160,6 @@ function getTokens(variant: Variant, themeColor: string): StyleTokens {
         footerText: "#6B7280",
         watermarkText: "#9CA3AF",
       };
-    case "modern":
     default:
       return {
         headerMode: "band",
@@ -165,7 +179,7 @@ function getTokens(variant: Variant, themeColor: string): StyleTokens {
   }
 }
 
-function addressLine(a?: any) {
+function addressLine(a?: Partial<Invoice["from"]["address"]>) {
   if (!a) return "";
   const parts = [a.city, a.state, a.postalCode].filter(Boolean);
   const cityLine = parts.join(", ");
@@ -179,7 +193,8 @@ function statusPill(status?: string) {
   if (status === "sent") return { bg: "#DBEAFE", fg: "#1D4ED8" };
   if (status === "partial") return { bg: "#FEF3C7", fg: "#92400E" };
   if (status === "overdue") return { bg: "#FEE2E2", fg: "#991B1B" };
-  if (status === "cancelled" || status === "void") return { bg: "#F3F4F6", fg: "#374151" };
+  if (status === "cancelled" || status === "void")
+    return { bg: "#F3F4F6", fg: "#374151" };
   if (status === "refunded") return { bg: "#EDE9FE", fg: "#5B21B6" };
   return { bg: "#E5E7EB", fg: "#111827" };
 }
@@ -200,7 +215,8 @@ function hexToRgb(hex: string) {
 }
 
 function rgbToHex(r: number, g: number, b: number) {
-  const to = (x: number) => clamp(Math.round(x), 0, 255).toString(16).padStart(2, "0");
+  const to = (x: number) =>
+    clamp(Math.round(x), 0, 255).toString(16).padStart(2, "0");
   return `#${to(r)}${to(g)}${to(b)}`;
 }
 
@@ -248,11 +264,16 @@ function hslToRgb(h: number, s: number, l: number) {
 
 function deriveBrandColors(primaryHex: string) {
   const rgb = hexToRgb(primaryHex) || hexToRgb("#0038e0");
-  if (!rgb) return { primary: "#0038e0", secondary: "#facc15", accent: "#111827" };
+  if (!rgb)
+    return { primary: "#0038e0", secondary: "#facc15", accent: "#111827" };
   const { h, s, l } = rgbToHsl(rgb.r, rgb.g, rgb.b);
   const s2 = clamp(s * 1.05, 0, 1);
   const secondaryRgb = hslToRgb((h + 45) % 360, s2, clamp(l, 0.35, 0.6));
-  const accentRgb = hslToRgb((h + 200) % 360, clamp(s * 0.75, 0, 1), clamp(l * 0.28, 0.12, 0.22));
+  const accentRgb = hslToRgb(
+    (h + 200) % 360,
+    clamp(s * 0.75, 0, 1),
+    clamp(l * 0.28, 0.12, 0.22),
+  );
   return {
     primary: rgbToHex(rgb.r, rgb.g, rgb.b),
     secondary: rgbToHex(secondaryRgb.r, secondaryRgb.g, secondaryRgb.b),
@@ -278,9 +299,15 @@ export function InvoiceTemplate({
   const hasTerms = !!String(invoice.terms || "").trim();
   const bank = invoice.bankDetails;
   const paymentMode = (invoice.paymentMode ||
-    (invoice.paymentLink ? "url" : (bank?.upi && !bank?.accountNumber && !bank?.iban) ? "upi" : "bank")) as "upi" | "bank" | "url";
+    (invoice.paymentLink
+      ? "url"
+      : bank?.upi && !bank?.accountNumber && !bank?.iban
+        ? "upi"
+        : "bank")) as "upi" | "bank" | "url";
   const lineItems = invoice.lineItems || [];
-  const hasItemDetails = lineItems.some((i) => !!String((i as any)?.details || "").trim());
+  const hasItemDetails = lineItems.some(
+    (i) => !!String(i.details || "").trim(),
+  );
   const hasBank = !!(
     bank?.bankName ||
     bank?.accountName ||
@@ -294,9 +321,14 @@ export function InvoiceTemplate({
     hasBank ||
     !!invoice.paymentTerms ||
     !!invoice.paymentLink ||
-    !!(invoice.paymentMethods && invoice.paymentMethods.length);
-  const hasSignature = !!invoice.showSignature && !!(invoice.signature || invoice.signatureTyped || invoice.signatureRole);
-  const showBottomBar = invoice.showFooter !== false || !!invoice.showWatermark || !!invoice.showPageNumbers;
+    !!invoice.paymentMethods?.length;
+  const hasSignature =
+    !!invoice.showSignature &&
+    !!(invoice.signature || invoice.signatureTyped || invoice.signatureRole);
+  const showBottomBar =
+    invoice.showFooter !== false ||
+    !!invoice.showWatermark ||
+    !!invoice.showPageNumbers;
 
   const styles = StyleSheet.create({
     page: {
@@ -364,7 +396,12 @@ export function InvoiceTemplate({
       marginBottom: 24,
     },
     addressBox: { width: "48%" },
-    addressRow: { flexDirection: "row", justifyContent: "space-between", gap: 10, alignItems: "flex-start" },
+    addressRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      gap: 10,
+      alignItems: "flex-start",
+    },
     addressCol: { flex: 1 },
     label: {
       fontSize: 10,
@@ -423,7 +460,11 @@ export function InvoiceTemplate({
       borderTopColor: t.totalsBorder,
     },
     grandTotalLabel: { fontSize: 12, fontWeight: 700, color: t.bodyText },
-    grandTotalValue: { fontSize: 12, fontWeight: 700, color: t.headerFg === "#FFFFFF" ? themeColor : t.bodyText },
+    grandTotalValue: {
+      fontSize: 12,
+      fontWeight: 700,
+      color: t.headerFg === "#FFFFFF" ? themeColor : t.bodyText,
+    },
     logo: { width: 60, height: 60, objectFit: "contain", marginBottom: 10 },
     addressLogo: { width: 48, height: 48, objectFit: "contain" },
     blockTitle: {
@@ -434,7 +475,12 @@ export function InvoiceTemplate({
       marginBottom: 6,
       fontWeight: 700,
     },
-    divider: { height: 1, backgroundColor: t.divider, marginTop: 10, marginBottom: 10 },
+    divider: {
+      height: 1,
+      backgroundColor: t.divider,
+      marginTop: 10,
+      marginBottom: 10,
+    },
     signatureImage: { width: 140, height: 52, objectFit: "contain" },
     bottomBar: {
       position: "absolute",
@@ -449,17 +495,35 @@ export function InvoiceTemplate({
       alignItems: "center",
     },
     bottomText: { fontSize: 10, color: t.footerText },
-    bottomLink: { fontSize: 10, color: t.watermarkText, textDecoration: "none" },
+    bottomLink: {
+      fontSize: 10,
+      color: t.watermarkText,
+      textDecoration: "none",
+    },
     bottomCol: { flex: 1 },
     bottomLeft: { textAlign: "left" },
     bottomCenter: { textAlign: "center" },
     bottomRight: { textAlign: "right" },
-    kvRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 4 },
+    kvRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: 4,
+    },
     kvKey: { fontSize: 10, color: t.mutedText },
     kvVal: { fontSize: 10, color: t.bodyText, textAlign: "right" },
-    qrBox: { marginTop: 10, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+    qrBox: {
+      marginTop: 10,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+    },
     qrImage: { width: 96, height: 96, objectFit: "contain" },
-    payRow: { marginTop: 10, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+    payRow: {
+      marginTop: 10,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+    },
     payLeft: { flex: 1, paddingRight: 12 },
     payLabel: { fontSize: 10, color: t.mutedText, marginBottom: 4 },
     payValue: { fontSize: 11, color: t.bodyText, fontWeight: 700 },
@@ -480,19 +544,39 @@ export function InvoiceTemplate({
       borderRadius: 3,
       padding: 12,
     },
-    termsBody: { fontSize: 9.5, color: t.mutedText, lineHeight: 1.35, fontStyle: "italic" },
+    termsBody: {
+      fontSize: 9.5,
+      color: t.mutedText,
+      lineHeight: 1.35,
+      fontStyle: "italic",
+    },
   });
 
   const Header = (
-    <View style={t.headerMode === "band" ? styles.headerBand : styles.headerPlain}>
+    <View
+      style={t.headerMode === "band" ? styles.headerBand : styles.headerPlain}
+    >
       <View>
-        <Text style={[styles.title, t.headerMode === "plain" ? { color: themeColor } : {}]}>
+        <Text
+          style={[
+            styles.title,
+            t.headerMode === "plain" ? { color: themeColor } : {},
+          ]}
+        >
           {invoice.title || "INVOICE"}
         </Text>
-        <Text style={t.headerMode === "plain" ? styles.valueInHeader : styles.valueInHeader}>
+        <Text
+          style={
+            t.headerMode === "plain"
+              ? styles.valueInHeader
+              : styles.valueInHeader
+          }
+        >
           {invoice.invoiceNumber}
         </Text>
-        {!!invoice.poNumber && <Text style={styles.valueInHeader}>PO: {invoice.poNumber}</Text>}
+        {!!invoice.poNumber && (
+          <Text style={styles.valueInHeader}>PO: {invoice.poNumber}</Text>
+        )}
         {!!invoice.deliveryDate && (
           <Text style={styles.valueInHeader}>
             Delivery: {new Date(invoice.deliveryDate).toLocaleDateString()}
@@ -503,20 +587,34 @@ export function InvoiceTemplate({
         <View style={styles.metaItem}>
           <Text style={styles.labelInHeader}>Issue</Text>
           <Text style={styles.valueInHeader}>
-            {invoice.issueDate ? new Date(invoice.issueDate).toLocaleDateString() : ""}
+            {invoice.issueDate
+              ? new Date(invoice.issueDate).toLocaleDateString()
+              : ""}
           </Text>
         </View>
         <View style={styles.metaItem}>
           <Text style={styles.labelInHeader}>Due</Text>
           <Text style={styles.valueInHeader}>
-            {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : ""}
+            {invoice.dueDate
+              ? new Date(invoice.dueDate).toLocaleDateString()
+              : ""}
           </Text>
         </View>
         {!!invoice.status && (
           <View style={styles.metaItem}>
             <Text style={styles.labelInHeader}>Status</Text>
-            <View style={[styles.statusPill, { backgroundColor: statusPill(invoice.status).bg }]}>
-              <Text style={[styles.statusText, { color: statusPill(invoice.status).fg }]}>
+            <View
+              style={[
+                styles.statusPill,
+                { backgroundColor: statusPill(invoice.status).bg },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.statusText,
+                  { color: statusPill(invoice.status).fg },
+                ]}
+              >
                 {String(invoice.status).toUpperCase()}
               </Text>
             </View>
@@ -531,9 +629,21 @@ export function InvoiceTemplate({
       <Page size="A4" style={styles.page}>
         {invoice.showRibbon !== false ? (
           <View fixed style={styles.topStripe}>
-            <View style={[styles.stripePrimary, { backgroundColor: stripe.primary }]} />
-            <View style={[styles.stripeSecondary, { backgroundColor: stripe.secondary }]} />
-            <View style={[styles.stripeAccent, { backgroundColor: stripe.accent }]} />
+            <View
+              style={[
+                styles.stripePrimary,
+                { backgroundColor: stripe.primary },
+              ]}
+            />
+            <View
+              style={[
+                styles.stripeSecondary,
+                { backgroundColor: stripe.secondary },
+              ]}
+            />
+            <View
+              style={[styles.stripeAccent, { backgroundColor: stripe.accent }]}
+            />
           </View>
         ) : null}
         {Header}
@@ -543,36 +653,92 @@ export function InvoiceTemplate({
             <View style={styles.addressBox}>
               <Text style={styles.label}>From</Text>
               <View style={styles.addressRow}>
-                {invoice.from?.logo ? <Image src={invoice.from.logo} style={styles.addressLogo} /> : null}
+                {invoice.from?.logo ? (
+                  <Image src={invoice.from.logo} style={styles.addressLogo} />
+                ) : null}
                 <View style={styles.addressCol}>
-                  <Text style={styles.businessName}>{invoice.from?.businessName}</Text>
-                  {!!invoice.from?.contactName && <Text style={styles.addressText}>{invoice.from.contactName}</Text>}
-                  {!!invoice.from?.email && <Text style={styles.addressText}>{invoice.from.email}</Text>}
-                  {!!invoice.from?.phone && <Text style={styles.addressText}>{invoice.from.phone}</Text>}
-                  {!!invoice.from?.taxId && <Text style={styles.addressText}>Tax ID: {invoice.from.taxId}</Text>}
-                  {!!invoice.from?.address?.line1 && <Text style={styles.addressText}>{invoice.from.address.line1}</Text>}
-                  {!!invoice.from?.address?.line2 && <Text style={styles.addressText}>{invoice.from.address.line2}</Text>}
-                  {!!addressLine(invoice.from?.address) && (
-                    <Text style={styles.addressText}>{addressLine(invoice.from?.address)}</Text>
+                  <Text style={styles.businessName}>
+                    {invoice.from?.businessName}
+                  </Text>
+                  {!!invoice.from?.contactName && (
+                    <Text style={styles.addressText}>
+                      {invoice.from.contactName}
+                    </Text>
                   )}
-                  {!!invoice.from?.website && <Text style={styles.addressText}>{invoice.from.website}</Text>}
+                  {!!invoice.from?.email && (
+                    <Text style={styles.addressText}>{invoice.from.email}</Text>
+                  )}
+                  {!!invoice.from?.phone && (
+                    <Text style={styles.addressText}>{invoice.from.phone}</Text>
+                  )}
+                  {!!invoice.from?.taxId && (
+                    <Text style={styles.addressText}>
+                      Tax ID: {invoice.from.taxId}
+                    </Text>
+                  )}
+                  {!!invoice.from?.address?.line1 && (
+                    <Text style={styles.addressText}>
+                      {invoice.from.address.line1}
+                    </Text>
+                  )}
+                  {!!invoice.from?.address?.line2 && (
+                    <Text style={styles.addressText}>
+                      {invoice.from.address.line2}
+                    </Text>
+                  )}
+                  {!!addressLine(invoice.from?.address) && (
+                    <Text style={styles.addressText}>
+                      {addressLine(invoice.from?.address)}
+                    </Text>
+                  )}
+                  {!!invoice.from?.website && (
+                    <Text style={styles.addressText}>
+                      {invoice.from.website}
+                    </Text>
+                  )}
                 </View>
               </View>
             </View>
             <View style={styles.addressBox}>
               <Text style={styles.label}>To</Text>
               <View style={styles.addressRow}>
-                {invoice.to?.logo ? <Image src={invoice.to.logo} style={styles.addressLogo} /> : null}
+                {invoice.to?.logo ? (
+                  <Image src={invoice.to.logo} style={styles.addressLogo} />
+                ) : null}
                 <View style={styles.addressCol}>
-                  <Text style={styles.businessName}>{invoice.to?.businessName}</Text>
-                  {!!invoice.to?.contactName && <Text style={styles.addressText}>{invoice.to.contactName}</Text>}
-                  {!!invoice.to?.email && <Text style={styles.addressText}>{invoice.to.email}</Text>}
-                  {!!invoice.to?.phone && <Text style={styles.addressText}>{invoice.to.phone}</Text>}
-                  {!!invoice.to?.taxId && <Text style={styles.addressText}>Tax ID: {invoice.to.taxId}</Text>}
-                  {!!invoice.to?.address?.line1 && <Text style={styles.addressText}>{invoice.to.address.line1}</Text>}
-                  {!!invoice.to?.address?.line2 && <Text style={styles.addressText}>{invoice.to.address.line2}</Text>}
+                  <Text style={styles.businessName}>
+                    {invoice.to?.businessName}
+                  </Text>
+                  {!!invoice.to?.contactName && (
+                    <Text style={styles.addressText}>
+                      {invoice.to.contactName}
+                    </Text>
+                  )}
+                  {!!invoice.to?.email && (
+                    <Text style={styles.addressText}>{invoice.to.email}</Text>
+                  )}
+                  {!!invoice.to?.phone && (
+                    <Text style={styles.addressText}>{invoice.to.phone}</Text>
+                  )}
+                  {!!invoice.to?.taxId && (
+                    <Text style={styles.addressText}>
+                      Tax ID: {invoice.to.taxId}
+                    </Text>
+                  )}
+                  {!!invoice.to?.address?.line1 && (
+                    <Text style={styles.addressText}>
+                      {invoice.to.address.line1}
+                    </Text>
+                  )}
+                  {!!invoice.to?.address?.line2 && (
+                    <Text style={styles.addressText}>
+                      {invoice.to.address.line2}
+                    </Text>
+                  )}
                   {!!addressLine(invoice.to?.address) && (
-                    <Text style={styles.addressText}>{addressLine(invoice.to?.address)}</Text>
+                    <Text style={styles.addressText}>
+                      {addressLine(invoice.to?.address)}
+                    </Text>
                   )}
                 </View>
               </View>
@@ -581,26 +747,80 @@ export function InvoiceTemplate({
 
           <View style={styles.table}>
             <View style={styles.tableHeader}>
-              <Text style={[{ width: hasItemDetails ? "28%" : "46%" }, styles.th]}>Name</Text>
-              {hasItemDetails ? <Text style={[{ width: "26%" }, styles.th]}>Description</Text> : null}
-              <Text style={[{ width: hasItemDetails ? "14%" : "18%" }, styles.th, styles.colRight]}>Qty</Text>
-              <Text style={[{ width: hasItemDetails ? "16%" : "18%" }, styles.th, styles.colRight]}>Price</Text>
-              <Text style={[{ width: hasItemDetails ? "16%" : "18%" }, styles.th, styles.colRight]}>Amount</Text>
+              <Text
+                style={[{ width: hasItemDetails ? "28%" : "46%" }, styles.th]}
+              >
+                Name
+              </Text>
+              {hasItemDetails ? (
+                <Text style={[{ width: "26%" }, styles.th]}>Description</Text>
+              ) : null}
+              <Text
+                style={[
+                  { width: hasItemDetails ? "14%" : "18%" },
+                  styles.th,
+                  styles.colRight,
+                ]}
+              >
+                Qty
+              </Text>
+              <Text
+                style={[
+                  { width: hasItemDetails ? "16%" : "18%" },
+                  styles.th,
+                  styles.colRight,
+                ]}
+              >
+                Price
+              </Text>
+              <Text
+                style={[
+                  { width: hasItemDetails ? "16%" : "18%" },
+                  styles.th,
+                  styles.colRight,
+                ]}
+              >
+                Amount
+              </Text>
             </View>
-            {lineItems.map((item, i) => (
-              <View key={i} style={styles.tr}>
-                <Text style={[{ width: hasItemDetails ? "28%" : "46%" }, styles.td]}>{item.description}</Text>
+            {lineItems.map((item) => (
+              <View key={item.id} style={styles.tr}>
+                <Text
+                  style={[{ width: hasItemDetails ? "28%" : "46%" }, styles.td]}
+                >
+                  {item.description}
+                </Text>
                 {hasItemDetails ? (
-                  <Text style={[{ width: "26%" }, styles.td]}>{String(item.details || "")}</Text>
+                  <Text style={[{ width: "26%" }, styles.td]}>
+                    {String(item.details || "")}
+                  </Text>
                 ) : null}
-                <Text style={[{ width: hasItemDetails ? "14%" : "18%" }, styles.td, styles.colRight]}>
+                <Text
+                  style={[
+                    { width: hasItemDetails ? "14%" : "18%" },
+                    styles.td,
+                    styles.colRight,
+                  ]}
+                >
                   {formatNumber(item.quantity)}
                   {item.unit ? ` ${item.unit}` : ""}
                 </Text>
-                <Text style={[{ width: hasItemDetails ? "16%" : "18%" }, styles.td, styles.colRight]}>
+                <Text
+                  style={[
+                    { width: hasItemDetails ? "16%" : "18%" },
+                    styles.td,
+                    styles.colRight,
+                  ]}
+                >
                   {formatMoneyPdf(item.unitPrice, invoice.currency)}
                 </Text>
-                <Text style={[{ width: hasItemDetails ? "16%" : "18%" }, styles.td, styles.colRight]}>
+                <Text
+                  style={[
+                    { width: hasItemDetails ? "16%" : "18%" },
+                    styles.td,
+                    styles.colRight,
+                  ]}
+                >
                   {formatMoneyPdf(item.amount || 0, invoice.currency)}
                 </Text>
               </View>
@@ -610,12 +830,16 @@ export function InvoiceTemplate({
           <View style={styles.totals}>
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Subtotal</Text>
-              <Text style={styles.totalValue}>{formatMoneyPdf(invoice.subtotal, invoice.currency)}</Text>
+              <Text style={styles.totalValue}>
+                {formatMoneyPdf(invoice.subtotal, invoice.currency)}
+              </Text>
             </View>
             {!!invoice.discountAmount && (
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Discount</Text>
-                <Text style={styles.totalValue}>-{formatMoneyPdf(invoice.discountAmount, invoice.currency)}</Text>
+                <Text style={styles.totalValue}>
+                  -{formatMoneyPdf(invoice.discountAmount, invoice.currency)}
+                </Text>
               </View>
             )}
             {(invoice.taxLines || []).map((tax, idx) => (
@@ -623,13 +847,17 @@ export function InvoiceTemplate({
                 <Text style={styles.totalLabel}>
                   {tax.name} ({tax.rate}%)
                 </Text>
-                <Text style={styles.totalValue}>{formatMoneyPdf(tax.amount || 0, invoice.currency)}</Text>
+                <Text style={styles.totalValue}>
+                  {formatMoneyPdf(tax.amount || 0, invoice.currency)}
+                </Text>
               </View>
             ))}
             {!!invoice.shippingFee && (
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Shipping</Text>
-                <Text style={styles.totalValue}>{formatMoneyPdf(invoice.shippingFee || 0, invoice.currency)}</Text>
+                <Text style={styles.totalValue}>
+                  {formatMoneyPdf(invoice.shippingFee || 0, invoice.currency)}
+                </Text>
               </View>
             )}
             <View style={styles.grandTotalRow}>
@@ -641,11 +869,18 @@ export function InvoiceTemplate({
             {!!invoice.amountPaid && (
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Amount Paid</Text>
-                <Text style={styles.totalValue}>-{formatMoneyPdf(invoice.amountPaid || 0, invoice.currency)}</Text>
+                <Text style={styles.totalValue}>
+                  -{formatMoneyPdf(invoice.amountPaid || 0, invoice.currency)}
+                </Text>
               </View>
             )}
             {!!invoice.amountPaid && (
-              <View style={[styles.grandTotalRow, { borderTopWidth: 1, borderTopColor: t.divider }]}>
+              <View
+                style={[
+                  styles.grandTotalRow,
+                  { borderTopWidth: 1, borderTopColor: t.divider },
+                ]}
+              >
                 <Text style={styles.grandTotalLabel}>Amount Due</Text>
                 <Text style={[styles.grandTotalValue, { color: themeColor }]}>
                   {formatMoneyPdf(invoice.amountDue || 0, invoice.currency)}
@@ -655,29 +890,53 @@ export function InvoiceTemplate({
           </View>
         </View>
 
-        {(hasNotes || hasTerms || hasDeliverables || hasPayment || hasSignature) && (
-          <View style={{ paddingHorizontal: 40, marginTop: 12, marginBottom: 56 }}>
+        {(hasNotes ||
+          hasTerms ||
+          hasDeliverables ||
+          hasPayment ||
+          hasSignature) && (
+          <View
+            style={{ paddingHorizontal: 40, marginTop: 12, marginBottom: 56 }}
+          >
             {hasPayment ? (
-              <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
                 <View style={{ width: "48%" }}>
                   {hasNotes ? (
                     <View style={{ marginBottom: 14 }}>
                       <View style={styles.noteBox}>
-                        <Text style={[styles.blockTitle, { color: "#111827", marginBottom: 6 }]}>Notes</Text>
-                        <Text style={[styles.addressText, { color: "#111827" }]}>{String(invoice.notes || "")}</Text>
+                        <Text
+                          style={[
+                            styles.blockTitle,
+                            { color: "#111827", marginBottom: 6 },
+                          ]}
+                        >
+                          Notes
+                        </Text>
+                        <Text
+                          style={[styles.addressText, { color: "#111827" }]}
+                        >
+                          {String(invoice.notes || "")}
+                        </Text>
                       </View>
                     </View>
                   ) : null}
                   {hasDeliverables ? (
                     <View style={{ marginBottom: 14 }}>
                       <View style={styles.deliverablesBox}>
-                        <Text style={[styles.blockTitle, { marginBottom: 6 }]}>Deliverables</Text>
+                        <Text style={[styles.blockTitle, { marginBottom: 6 }]}>
+                          Deliverables
+                        </Text>
                         {String(invoice.deliverables || "")
                           .split(/\r?\n/g)
                           .map((s) => s.replace(/^\s*[-*]\s*/, "").trim())
                           .filter(Boolean)
-                          .map((d, idx) => (
-                            <Text key={idx} style={styles.addressText}>
+                          .map((d) => (
+                            <Text key={d} style={styles.addressText}>
                               • {d}
                             </Text>
                           ))}
@@ -687,34 +946,70 @@ export function InvoiceTemplate({
                   {hasTerms ? (
                     <View style={{ marginBottom: 14 }}>
                       <View style={styles.termsBox}>
-                        <Text style={[styles.blockTitle, { marginBottom: 6 }]}>Terms & Conditions</Text>
-                        <Text style={styles.termsBody}>{String(invoice.terms || "")}</Text>
+                        <Text style={[styles.blockTitle, { marginBottom: 6 }]}>
+                          Terms & Conditions
+                        </Text>
+                        <Text style={styles.termsBody}>
+                          {String(invoice.terms || "")}
+                        </Text>
                       </View>
                     </View>
                   ) : null}
                   {hasSignature ? (
-                    <View wrap={false} style={{ marginTop: hasNotes || hasTerms || hasDeliverables ? 40 : 16 }}>
+                    <View
+                      wrap={false}
+                      style={{
+                        marginTop:
+                          hasNotes || hasTerms || hasDeliverables ? 40 : 16,
+                      }}
+                    >
                       <Text style={styles.blockTitle}>Signature</Text>
                       <View style={{ marginTop: 18 }}>
                         {(() => {
                           const mode = invoice.signatureMode;
                           if (mode === "type") {
                             return invoice.signatureTyped ? (
-                              <Text style={[styles.addressText, { fontSize: 16, fontStyle: "italic", color: t.bodyText }]}>
+                              <Text
+                                style={[
+                                  styles.addressText,
+                                  {
+                                    fontSize: 16,
+                                    fontStyle: "italic",
+                                    color: t.bodyText,
+                                  },
+                                ]}
+                              >
                                 {invoice.signatureTyped}
                               </Text>
                             ) : null;
                           }
-                          if (invoice.signature) return <Image src={invoice.signature} style={styles.signatureImage} />;
+                          if (invoice.signature)
+                            return (
+                              <Image
+                                src={invoice.signature}
+                                style={styles.signatureImage}
+                              />
+                            );
                           return invoice.signatureTyped ? (
-                            <Text style={[styles.addressText, { fontSize: 16, fontStyle: "italic", color: t.bodyText }]}>
+                            <Text
+                              style={[
+                                styles.addressText,
+                                {
+                                  fontSize: 16,
+                                  fontStyle: "italic",
+                                  color: t.bodyText,
+                                },
+                              ]}
+                            >
                               {invoice.signatureTyped}
                             </Text>
                           ) : null;
                         })()}
                       </View>
                       <View style={styles.divider} />
-                      <Text style={styles.addressText}>{invoice.signatureRole || ""}</Text>
+                      <Text style={styles.addressText}>
+                        {invoice.signatureRole || ""}
+                      </Text>
                     </View>
                   ) : null}
                 </View>
@@ -722,16 +1017,20 @@ export function InvoiceTemplate({
                 <View style={{ width: "48%" }}>
                   <View>
                     <Text style={styles.blockTitle}>Payment</Text>
-                    {!!(invoice.paymentMethods && invoice.paymentMethods.length) && (
+                    {!!invoice.paymentMethods?.length && (
                       <View style={styles.kvRow}>
                         <Text style={styles.kvKey}>Methods</Text>
-                        <Text style={styles.kvVal}>{invoice.paymentMethods.join(", ")}</Text>
+                        <Text style={styles.kvVal}>
+                          {invoice.paymentMethods.join(", ")}
+                        </Text>
                       </View>
                     )}
                     {!!invoice.paymentTerms && (
                       <View style={styles.kvRow}>
                         <Text style={styles.kvKey}>Terms</Text>
-                        <Text style={styles.kvVal}>{String(invoice.paymentTerms)}</Text>
+                        <Text style={styles.kvVal}>
+                          {String(invoice.paymentTerms)}
+                        </Text>
                       </View>
                     )}
                     {!!invoice.paymentLink && (
@@ -793,15 +1092,19 @@ export function InvoiceTemplate({
                         <View style={styles.payLeft}>
                           <Text style={styles.payLabel}>UPI ID</Text>
                           <Text style={styles.payValue}>{bank.upi}</Text>
-                          {(invoice as any).upiQr ? (
+                          {invoice.upiQr ? (
                             <Text style={styles.payHint}>
-                              Scan to pay {formatMoneyPdf(((invoice.amountDue ?? invoice.total) || 0) as any, invoice.currency)}
+                              Scan to pay{" "}
+                              {formatMoneyPdf(
+                                (invoice.amountDue ?? invoice.total) || 0,
+                                invoice.currency,
+                              )}
                             </Text>
                           ) : null}
                         </View>
-                        {(invoice as any).upiQr ? (
+                        {invoice.upiQr ? (
                           <View style={styles.payQrCol}>
-                            <Image src={(invoice as any).upiQr} style={styles.qrImage} />
+                            <Image src={invoice.upiQr} style={styles.qrImage} />
                           </View>
                         ) : null}
                       </View>
@@ -814,21 +1117,32 @@ export function InvoiceTemplate({
                 {hasNotes ? (
                   <View style={{ marginBottom: 14 }}>
                     <View style={styles.noteBox}>
-                      <Text style={[styles.blockTitle, { color: "#111827", marginBottom: 6 }]}>Notes</Text>
-                      <Text style={[styles.addressText, { color: "#111827" }]}>{String(invoice.notes || "")}</Text>
+                      <Text
+                        style={[
+                          styles.blockTitle,
+                          { color: "#111827", marginBottom: 6 },
+                        ]}
+                      >
+                        Notes
+                      </Text>
+                      <Text style={[styles.addressText, { color: "#111827" }]}>
+                        {String(invoice.notes || "")}
+                      </Text>
                     </View>
                   </View>
                 ) : null}
                 {hasDeliverables ? (
                   <View style={{ marginBottom: 14 }}>
                     <View style={styles.deliverablesBox}>
-                      <Text style={[styles.blockTitle, { marginBottom: 6 }]}>Deliverables</Text>
+                      <Text style={[styles.blockTitle, { marginBottom: 6 }]}>
+                        Deliverables
+                      </Text>
                       {String(invoice.deliverables || "")
                         .split(/\r?\n/g)
                         .map((s) => s.replace(/^\s*[-*]\s*/, "").trim())
                         .filter(Boolean)
-                        .map((d, idx) => (
-                          <Text key={idx} style={styles.addressText}>
+                        .map((d) => (
+                          <Text key={d} style={styles.addressText}>
                             • {d}
                           </Text>
                         ))}
@@ -838,34 +1152,70 @@ export function InvoiceTemplate({
                 {hasTerms ? (
                   <View style={{ marginBottom: 14 }}>
                     <View style={styles.termsBox}>
-                      <Text style={[styles.blockTitle, { marginBottom: 6 }]}>Terms & Conditions</Text>
-                      <Text style={styles.termsBody}>{String(invoice.terms || "")}</Text>
+                      <Text style={[styles.blockTitle, { marginBottom: 6 }]}>
+                        Terms & Conditions
+                      </Text>
+                      <Text style={styles.termsBody}>
+                        {String(invoice.terms || "")}
+                      </Text>
                     </View>
                   </View>
                 ) : null}
                 {hasSignature ? (
-                  <View wrap={false} style={{ marginTop: hasNotes || hasTerms || hasDeliverables ? 40 : 16 }}>
+                  <View
+                    wrap={false}
+                    style={{
+                      marginTop:
+                        hasNotes || hasTerms || hasDeliverables ? 40 : 16,
+                    }}
+                  >
                     <Text style={styles.blockTitle}>Signature</Text>
                     <View style={{ marginTop: 18 }}>
                       {(() => {
                         const mode = invoice.signatureMode;
                         if (mode === "type") {
                           return invoice.signatureTyped ? (
-                            <Text style={[styles.addressText, { fontSize: 16, fontStyle: "italic", color: t.bodyText }]}>
+                            <Text
+                              style={[
+                                styles.addressText,
+                                {
+                                  fontSize: 16,
+                                  fontStyle: "italic",
+                                  color: t.bodyText,
+                                },
+                              ]}
+                            >
                               {invoice.signatureTyped}
                             </Text>
                           ) : null;
                         }
-                        if (invoice.signature) return <Image src={invoice.signature} style={styles.signatureImage} />;
+                        if (invoice.signature)
+                          return (
+                            <Image
+                              src={invoice.signature}
+                              style={styles.signatureImage}
+                            />
+                          );
                         return invoice.signatureTyped ? (
-                          <Text style={[styles.addressText, { fontSize: 16, fontStyle: "italic", color: t.bodyText }]}>
+                          <Text
+                            style={[
+                              styles.addressText,
+                              {
+                                fontSize: 16,
+                                fontStyle: "italic",
+                                color: t.bodyText,
+                              },
+                            ]}
+                          >
                             {invoice.signatureTyped}
                           </Text>
                         ) : null;
                       })()}
                     </View>
                     <View style={styles.divider} />
-                    <Text style={styles.addressText}>{invoice.signatureRole || ""}</Text>
+                    <Text style={styles.addressText}>
+                      {invoice.signatureRole || ""}
+                    </Text>
                   </View>
                 ) : null}
               </View>
@@ -877,14 +1227,23 @@ export function InvoiceTemplate({
           <View fixed style={styles.bottomBar}>
             <View style={styles.bottomCol}>
               <Text style={[styles.bottomText, styles.bottomLeft]}>
-                {invoice.showFooter !== false ? invoice.from?.businessName || "Thank you for your business." : ""}
+                {invoice.showFooter !== false
+                  ? invoice.from?.businessName || "Thank you for your business."
+                  : ""}
               </Text>
             </View>
             <View style={styles.bottomCol}>
               {invoice.showPageNumbers ? (
-                <Text style={[styles.bottomText, styles.bottomCenter]} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+                <Text
+                  style={[styles.bottomText, styles.bottomCenter]}
+                  render={({ pageNumber, totalPages }) =>
+                    `${pageNumber} / ${totalPages}`
+                  }
+                />
               ) : (
-                <Text style={[styles.bottomText, styles.bottomCenter]}>{""}</Text>
+                <Text style={[styles.bottomText, styles.bottomCenter]}>
+                  {""}
+                </Text>
               )}
             </View>
             <View style={styles.bottomCol}>
@@ -895,7 +1254,9 @@ export function InvoiceTemplate({
                   </Link>
                 </View>
               ) : (
-                <Text style={[styles.bottomText, styles.bottomRight]}>{""}</Text>
+                <Text style={[styles.bottomText, styles.bottomRight]}>
+                  {""}
+                </Text>
               )}
             </View>
           </View>
