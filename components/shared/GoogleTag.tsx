@@ -1,7 +1,7 @@
 import Script from "next/script";
 
-export function GoogleTag() {
-  const gtagId = process.env.NEXT_PUBLIC_GTAG_ID;
+export function GoogleTag({ gtagId: gtagIdProp }: { gtagId?: string }) {
+  const gtagId = gtagIdProp ?? process.env.NEXT_PUBLIC_GTAG_ID;
 
   if (!gtagId) return null;
 

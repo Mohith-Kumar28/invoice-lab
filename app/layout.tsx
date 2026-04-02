@@ -20,11 +20,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
-  const gtagId = process.env.NEXT_PUBLIC_GTAG_ID;
+  const gtagId = process.env.NEXT_PUBLIC_GTAG_ID || "G-WL85BW3HTX";
   const useGtm = Boolean(gtmId);
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>{useGtm ? null : <GoogleTag gtagId={gtagId} />}</head>
       <body
         className={`${inter.variable} font-sans antialiased min-h-screen flex flex-col`}
       >
@@ -47,7 +48,7 @@ export default function RootLayout({
         >
           <Header />
           <main className="flex-1 flex flex-col">{children}</main>
-          {useGtm ? <GoogleTagManager /> : gtagId ? <GoogleTag /> : null}
+          {useGtm ? <GoogleTagManager /> : null}
         </ThemeProvider>
       </body>
     </html>
