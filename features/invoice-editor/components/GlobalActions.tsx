@@ -56,8 +56,8 @@ export function GlobalActions() {
       return;
     }
 
-    setSaveStatus("saving");
     const timeoutId = setTimeout(() => {
+      setSaveStatus("saving");
       saveInvoice({
         ...invoice,
         updatedAt: new Date(),
@@ -66,8 +66,8 @@ export function GlobalActions() {
       
       setTimeout(() => {
         setSaveStatus("idle");
-      }, 5000);
-    }, 5000);
+      }, 3000);
+    }, 3000);
 
     return () => clearTimeout(timeoutId);
   }, [invoice, saveInvoice, updateInvoice]);

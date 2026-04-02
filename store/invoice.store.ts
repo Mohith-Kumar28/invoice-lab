@@ -114,7 +114,11 @@ export const useInvoiceStore = create<InvoiceState>()(
           if (Object.prototype.hasOwnProperty.call(updates.to, "businessName")) delete nextErrors["to.businessName"];
         }
         if (updates.bankDetails) {
-          nextInvoice.bankDetails = updates.bankDetails as any;
+          if (Object.prototype.hasOwnProperty.call(updates, "paymentMode")) {
+            nextInvoice.bankDetails = updates.bankDetails as any;
+          } else {
+            nextInvoice.bankDetails = { ...(state.invoice.bankDetails || {}), ...updates.bankDetails } as any;
+          }
         }
         if (Object.prototype.hasOwnProperty.call(updates, "invoiceNumber")) delete nextErrors["invoiceNumber"];
         if (Object.prototype.hasOwnProperty.call(updates, "title")) delete nextErrors["title"];

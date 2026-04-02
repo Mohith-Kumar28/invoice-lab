@@ -459,8 +459,14 @@ export function InvoiceTemplate({
     kvVal: { fontSize: 10, color: t.bodyText, textAlign: "right" },
     qrBox: { marginTop: 10, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
     qrImage: { width: 96, height: 96, objectFit: "contain" },
+    payRow: { marginTop: 10, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+    payLeft: { flex: 1, paddingRight: 12 },
+    payLabel: { fontSize: 10, color: t.mutedText, marginBottom: 4 },
+    payValue: { fontSize: 11, color: t.bodyText, fontWeight: 700 },
+    payHint: { fontSize: 10, color: t.mutedText, marginTop: 10 },
+    payQrCol: { width: 96, alignItems: "flex-end" },
     noteBox: {
-      backgroundColor: "#FFFEFB",
+      backgroundColor: "#fff8e3",
       borderRadius: 3,
       padding: 12,
     },
@@ -783,20 +789,21 @@ export function InvoiceTemplate({
                       </View>
                     )}
                     {paymentMode === "upi" && bank?.upi && (
-                      <View style={styles.kvRow}>
-                        <Text style={styles.kvKey}>UPI</Text>
-                        <Text style={styles.kvVal}>{bank.upi}</Text>
-                      </View>
-                    )}
-
-                    {paymentMode === "upi" && bank?.upi && (invoice as any).upiQr && (
-                      <View style={styles.qrBox}>
-                        <View style={{ flex: 1, paddingRight: 10 }}>
-                          <Text style={styles.addressText}>
-                            Scan to pay {formatMoneyPdf(((invoice.amountDue ?? invoice.total) || 0) as any, invoice.currency)}
-                          </Text>
+                      <View style={styles.payRow}>
+                        <View style={styles.payLeft}>
+                          <Text style={styles.payLabel}>UPI ID</Text>
+                          <Text style={styles.payValue}>{bank.upi}</Text>
+                          {(invoice as any).upiQr ? (
+                            <Text style={styles.payHint}>
+                              Scan to pay {formatMoneyPdf(((invoice.amountDue ?? invoice.total) || 0) as any, invoice.currency)}
+                            </Text>
+                          ) : null}
                         </View>
-                        <Image src={(invoice as any).upiQr} style={styles.qrImage} />
+                        {(invoice as any).upiQr ? (
+                          <View style={styles.payQrCol}>
+                            <Image src={(invoice as any).upiQr} style={styles.qrImage} />
+                          </View>
+                        ) : null}
                       </View>
                     )}
                   </View>
