@@ -78,6 +78,7 @@ function FilePicker({
         type="button"
         variant="outline"
         size="sm"
+        className="bg-primary/10 text-primary hover:bg-primary/20"
         onClick={() => inputRef.current?.click()}
       >
         Choose
@@ -228,7 +229,7 @@ export function Section1Details() {
               setDueInDays(parseInt(val, 10));
             }}
           >
-            <SelectTrigger className="w-[92px]">
+            <SelectTrigger className="w-[92px] bg-primary/10 text-primary hover:bg-primary/20">
               <span className="text-sm">
                 {duePreset === "custom" ? "Custom" : `+${duePreset}d`}
               </span>
@@ -612,10 +613,10 @@ export function Section5Pricing() {
               if (val === "hst13") addTaxLine({ name: "HST", rate: 13, compound: false });
               if (val === "custom") addTaxLine();
             }}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px] bg-primary/10 text-primary hover:bg-primary/20">
                 <div className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  <SelectValue placeholder="Add tax" />
+                  <Plus className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">Add tax</span>
                 </div>
               </SelectTrigger>
               <SelectContent>
