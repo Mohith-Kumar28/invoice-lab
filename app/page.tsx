@@ -1,6 +1,8 @@
 import {
   ArrowRight,
   BadgeCheck,
+  FileSignature,
+  FileText,
   Gauge,
   Lock,
   Palette,
@@ -8,6 +10,7 @@ import {
   Save,
 } from "lucide-react";
 import Link from "next/link";
+import { ToolCard } from "@/components/tools/ToolCard";
 import {
   Accordion,
   AccordionContent,
@@ -37,12 +40,12 @@ export default function HomePage() {
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
               {APP_NAME}{" "}
               <span className="text-muted-foreground">
-                — Free Invoice Generator
+                — Free Business Tools
               </span>
             </h1>
             <p className="text-muted-foreground md:text-lg">
-              Create clean, professional invoices in minutes. Customize the
-              look, export a PDF, and keep your data on your device.
+              Create professional documents in minutes. Customize design, export
+              a PDF, and keep your data on your device.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
               <Button
@@ -56,6 +59,16 @@ export default function HomePage() {
               </Button>
               <Button
                 nativeButton={false}
+                render={<Link href="/payslip-generator" />}
+                variant="secondary"
+                size="lg"
+                className="h-11 px-6"
+              >
+                Generate Payslip
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+              <Button
+                nativeButton={false}
                 render={<Link href="#faq" />}
                 variant="outline"
                 size="lg"
@@ -64,6 +77,32 @@ export default function HomePage() {
                 FAQ
               </Button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="w-full">
+        <div className="container mx-auto px-4 md:px-6 py-10 md:py-14">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold tracking-tight">Tools</h2>
+            <p className="text-muted-foreground">
+              A growing collection of local-first utilities.
+            </p>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <ToolCard
+              href="/invoice-generator"
+              title="Invoice Generator"
+              description="Create and export professional invoices with templates, discounts, taxes, signatures and payment options."
+              icon={<FileText />}
+            />
+            <ToolCard
+              href="/payslip-generator"
+              title="Payslip Generator"
+              description="Design clean payslips with multiple template styles, auto-save and full PDF export."
+              icon={<FileSignature />}
+              badge="New"
+            />
           </div>
         </div>
       </section>
