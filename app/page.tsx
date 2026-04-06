@@ -103,6 +103,13 @@ export default function HomePage() {
               icon={<FileSignature />}
               badge="New"
             />
+            <ToolCard
+              href="/qr-code-generator"
+              title="QR Code Generator"
+              description="Generate QR codes for URLs, Wi‑Fi, email, events and more — with colors, shapes and logo support."
+              icon={<QrCode />}
+              badge="New"
+            />
           </div>
         </div>
       </section>

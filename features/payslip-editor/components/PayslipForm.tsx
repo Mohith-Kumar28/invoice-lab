@@ -4,7 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import * as React from "react";
 import { HexColorPicker } from "react-colorful";
 import { DatePicker } from "@/components/shared/DatePicker";
-import { FilePicker } from "@/components/shared/FilePicker";
+import { ImagePicker } from "@/components/shared/ImagePicker";
 import { SignatureSection } from "@/components/shared/SignatureSection";
 import {
   Accordion,
@@ -91,22 +91,6 @@ export function PayslipForm() {
     });
   };
 
-  const validateLogo = async (file: File) => {
-    if (file.size > 2 * 1024 * 1024) {
-      setErrors({ ...errors, "employer.logo": "Logo must be 2MB or smaller." });
-      window.dispatchEvent(new CustomEvent("payslip:showErrors"));
-      return;
-    }
-    clearErrors(["employer.logo"]);
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result || ""));
-      reader.onerror = () => reject(new Error("Failed to read file"));
-      reader.readAsDataURL(file);
-    });
-    updatePayslip({ employer: { logo: dataUrl } });
-  };
-
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -154,19 +138,24 @@ export function PayslipForm() {
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label>Company Logo (Optional)</Label>
-                <FilePicker
+                <ImagePicker
                   accept="image/png,image/svg+xml,image/jpeg"
-                  fileLabel="Upload Logo"
-                  onFile={(file) => {
-                    validateLogo(file).catch(() => {
-                      setErrors({
-                        ...errors,
-                        "employer.logo": "Failed to load logo.",
-                      });
-                      window.dispatchEvent(
-                        new CustomEvent("payslip:showErrors"),
-                      );
+                  value={payslip.employer.logo}
+                  fileLabel="Upload logo"
+                  maxSizeBytes={2 * 1024 * 1024}
+                  onError={(message) => {
+                    setErrors({
+                      ...errors,
+                      "employer.logo":
+                        message === "File is too large."
+                          ? "Logo must be 2MB or smaller."
+                          : "Failed to load logo.",
                     });
+                    window.dispatchEvent(new CustomEvent("payslip:showErrors"));
+                  }}
+                  onChange={(next) => {
+                    clearErrors(["employer.logo"]);
+                    updatePayslip({ employer: { logo: next } });
                   }}
                 />
                 <div className="text-xs text-muted-foreground">

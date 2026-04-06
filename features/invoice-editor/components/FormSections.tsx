@@ -1,11 +1,11 @@
 "use client";
 
 import { Plus, RefreshCcw, Trash2 } from "lucide-react";
-import Image from "next/image";
 import * as React from "react";
 import { HexColorPicker } from "react-colorful";
 import { DatePicker } from "@/components/shared/DatePicker";
-import { FilePicker } from "@/components/shared/FilePicker";
+import { ImagePicker } from "@/components/shared/ImagePicker";
+import { RequiredLabel } from "@/components/shared/RequiredLabel";
 import { SignatureSection } from "@/components/shared/SignatureSection";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,21 +39,6 @@ import type { TemplateKey } from "@/features/templates/renderers";
 import { currencies } from "@/lib/currencies";
 import { formatMoney } from "@/lib/format";
 import type { Invoice } from "@/types/invoice.types";
-
-function ReqLabel({
-  children,
-  htmlFor,
-}: {
-  children: React.ReactNode;
-  htmlFor?: string;
-}) {
-  return (
-    <Label htmlFor={htmlFor}>
-      {children}
-      <span className="text-destructive"> *</span>
-    </Label>
-  );
-}
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
@@ -108,7 +93,7 @@ export function Section1Details() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="space-y-2">
-        <ReqLabel htmlFor="invoiceNumber">Invoice Number</ReqLabel>
+        <RequiredLabel htmlFor="invoiceNumber">Invoice Number</RequiredLabel>
         <div className="relative">
           <Input
             id="invoiceNumber"
@@ -135,7 +120,9 @@ export function Section1Details() {
         <FieldError message={errors.invoiceNumber} />
       </div>
       <div className="space-y-2">
-        <ReqLabel htmlFor="invoiceTitlePreset">Invoice Title</ReqLabel>
+        <RequiredLabel htmlFor="invoiceTitlePreset">
+          Invoice Title
+        </RequiredLabel>
         <div className="flex items-center gap-2">
           <Select
             value={titlePresetValue}
@@ -176,7 +163,7 @@ export function Section1Details() {
         )}
       </div>
       <div className="space-y-2">
-        <ReqLabel htmlFor="issueDateField">Issue Date</ReqLabel>
+        <RequiredLabel htmlFor="issueDateField">Issue Date</RequiredLabel>
         <div id="issueDateField">
           <DatePicker
             date={invoice.issueDate ? new Date(invoice.issueDate) : undefined}
@@ -189,7 +176,7 @@ export function Section1Details() {
       </div>
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2">
-          <ReqLabel htmlFor="dueDateField">Due Date</ReqLabel>
+          <RequiredLabel htmlFor="dueDateField">Due Date</RequiredLabel>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex-1" id="dueDateField">
@@ -247,7 +234,7 @@ export function Section1Details() {
         />
       </div>
       <div className="space-y-2">
-        <ReqLabel htmlFor="currencyField">Currency</ReqLabel>
+        <RequiredLabel htmlFor="currencyField">Currency</RequiredLabel>
         <Select
           value={invoice.currency || "INR"}
           onValueChange={(val) => updateInvoice({ currency: val || "INR" })}
@@ -316,54 +303,19 @@ export function Section2From() {
     updateInvoice({ from: fields });
   };
 
-  const handleLogoUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      updateFrom({ logo: reader.result as string });
-    };
-    reader.readAsDataURL(file);
-  };
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="space-y-2 md:col-span-2">
         <Label>Business Logo</Label>
-        <div className="flex items-center gap-4">
-          {invoice.from?.logo && (
-            <div className="relative w-16 h-16 rounded-md overflow-hidden border">
-              <Image
-                src={invoice.from.logo}
-                alt="Logo"
-                fill
-                className="object-contain"
-                sizes="64px"
-                unoptimized
-              />
-            </div>
-          )}
-          <div className="flex-1">
-            <FilePicker
-              accept="image/png, image/jpeg, image/jpg"
-              onFile={handleLogoUpload}
-              fileLabel={
-                invoice.from?.logo ? "Image selected" : "No file chosen"
-              }
-            />
-          </div>
-          {invoice.from?.logo && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={() => updateFrom({ logo: undefined })}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        <ImagePicker
+          accept="image/png, image/jpeg, image/jpg"
+          value={invoice.from?.logo}
+          fileLabel="Upload logo"
+          onChange={(next) => updateFrom({ logo: next })}
+        />
       </div>
       <div className="space-y-2">
-        <ReqLabel htmlFor="fromBusinessName">Business Name</ReqLabel>
+        <RequiredLabel htmlFor="fromBusinessName">Business Name</RequiredLabel>
         <Input
           id="fromBusinessName"
           value={invoice.from?.businessName || ""}
@@ -502,52 +454,21 @@ export function Section3To() {
     updateInvoice({ to: fields });
   };
 
-  const handleLogoUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      updateTo({ logo: reader.result as string });
-    };
-    reader.readAsDataURL(file);
-  };
-
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="space-y-2 md:col-span-2">
         <Label>Client Logo</Label>
-        <div className="flex items-center gap-4">
-          {invoice.to?.logo && (
-            <div className="relative w-16 h-16 rounded-md overflow-hidden border">
-              <Image
-                src={invoice.to.logo}
-                alt="Logo"
-                fill
-                className="object-contain"
-                sizes="64px"
-                unoptimized
-              />
-            </div>
-          )}
-          <div className="flex-1">
-            <FilePicker
-              accept="image/png, image/jpeg, image/jpg"
-              onFile={handleLogoUpload}
-              fileLabel={invoice.to?.logo ? "Image selected" : "No file chosen"}
-            />
-          </div>
-          {invoice.to?.logo && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={() => updateTo({ logo: undefined })}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        <ImagePicker
+          accept="image/png, image/jpeg, image/jpg"
+          value={invoice.to?.logo}
+          fileLabel="Upload logo"
+          onChange={(next) => updateTo({ logo: next })}
+        />
       </div>
       <div className="space-y-2">
-        <ReqLabel htmlFor="toBusinessName">Client Business Name</ReqLabel>
+        <RequiredLabel htmlFor="toBusinessName">
+          Client Business Name
+        </RequiredLabel>
         <Input
           id="toBusinessName"
           value={invoice.to?.businessName || ""}
