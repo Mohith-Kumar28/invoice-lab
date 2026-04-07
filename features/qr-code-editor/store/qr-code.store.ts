@@ -11,12 +11,15 @@ type QrCodeUpdate = Partial<Omit<QrCodeDoc, "style">> & {
   style?: Partial<QrCodeStyle>;
 };
 
-type QrDownloadExtension = "png" | "svg" | "jpeg" | "webp";
+type QrDownloadExtension = "png" | "svg" | "jpeg" | "webp" | "tiff";
+
+type QrColorSpace = "rgb" | "cmyk";
 
 type DownloadApi = {
   download: (args: {
     extension: QrDownloadExtension;
     size: number;
+    colorSpace: QrColorSpace;
     name?: string;
   }) => Promise<void>;
 };
@@ -24,6 +27,7 @@ type DownloadApi = {
 type ExportSettings = {
   extension: QrDownloadExtension;
   size: number;
+  colorSpace: QrColorSpace;
 };
 
 interface QrCodeState {
@@ -48,12 +52,12 @@ function createDefaultStyle(): QrCodeStyle {
     shape: "square",
     errorCorrectionLevel: "Q",
     dotsType: "square",
-    dotsColor: "#111827",
+    dotsColor: "#000000",
     backgroundColor: "#ffffff",
     cornersSquareType: "square",
-    cornersSquareColor: "#111827",
+    cornersSquareColor: "#000000",
     cornersDotType: "square",
-    cornersDotColor: "#111827",
+    cornersDotColor: "#000000",
     logoSize: 0.45,
     logoMargin: 8,
     hideBackgroundDots: true,
@@ -94,7 +98,7 @@ function createDefaultDoc(overrides?: Partial<QrCodeDoc>): QrCodeDoc {
     logoDataUrl: undefined,
     captionTitle: "",
     captionDescription: "",
-    showActionDetails: true,
+    showActionDetails: false,
     style: createDefaultStyle(),
     createdAt: now,
     updatedAt: now,
@@ -123,7 +127,7 @@ function normalizeDoc(doc: QrCodeDoc): QrCodeDoc {
     showActionDetails:
       (doc as unknown as { showActionDetails?: boolean }).showActionDetails ??
       (doc as unknown as { showDetails?: boolean }).showDetails ??
-      true,
+      false,
     upiVpa: (doc as unknown as { upiVpa?: string }).upiVpa || "",
     upiPayeeName:
       (doc as unknown as { upiPayeeName?: string }).upiPayeeName || "",
@@ -147,7 +151,7 @@ export const useQrCodeStore = create<QrCodeState>()(
       let downloadApi: DownloadApi | undefined;
       return {
         doc: createDefaultDoc(),
-        exportSettings: { extension: "png", size: 768 },
+        exportSettings: { extension: "png", size: 768, colorSpace: "rgb" },
         errors: {},
         setDoc: (doc) => set({ doc: normalizeDoc(doc) }),
         updateDoc: (updates) =>
@@ -187,8 +191,13 @@ export const useQrCodeStore = create<QrCodeState>()(
         download: async (fileName) => {
           const api = downloadApi;
           if (!api) return;
-          const { extension, size } = get().exportSettings;
-          await api.download({ extension, size, name: fileName || "qr-code" });
+          const { extension, size, colorSpace } = get().exportSettings;
+          await api.download({
+            extension,
+            size,
+            colorSpace,
+            name: fileName || "qr-code",
+          });
         },
       };
     },
@@ -202,6 +211,11 @@ export const useQrCodeStore = create<QrCodeState>()(
       onRehydrateStorage: () => (state) => {
         if (!state?.doc) return;
         state.setDoc(state.doc);
+        state.setExportSettings({
+          colorSpace:
+            (state.exportSettings as unknown as { colorSpace?: QrColorSpace })
+              .colorSpace ?? "rgb",
+        });
       },
     },
   ),

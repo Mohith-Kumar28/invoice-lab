@@ -12,6 +12,7 @@ import {
   Wifi,
 } from "lucide-react";
 import * as React from "react";
+import * as UTIF from "utif";
 import { buildQrPayload } from "@/features/qr-code-editor/lib/qr-payload";
 import { useQrCodeStore } from "@/features/qr-code-editor/store/qr-code.store";
 
@@ -108,6 +109,23 @@ function downloadBlob({ blob, fileName }: { blob: Blob; fileName: string }) {
   }, 0);
 }
 
+async function convertSvgViaApi(args: {
+  svg: string;
+  format: "jpeg" | "tiff";
+  colorSpace: "rgb" | "cmyk";
+  width: number;
+  height: number;
+  name: string;
+}) {
+  const res = await fetch("/api/qr/convert", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(args),
+  });
+  if (!res.ok) throw new Error("Conversion failed");
+  return await res.blob();
+}
+
 function loadImageFromBlob(blob: Blob): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(blob);
@@ -147,6 +165,20 @@ function wrapText(
 
 function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
+}
+
+function canvasToTiffBlob(canvas: HTMLCanvasElement) {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas context not available");
+  const { width, height } = canvas;
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const rgba = new Uint8Array(
+    imageData.data.buffer,
+    imageData.data.byteOffset,
+    imageData.data.byteLength,
+  );
+  const buf = UTIF.encodeImage(rgba, width, height);
+  return new Blob([buf], { type: "image/tiff" });
 }
 
 function drawRoundedRect(
@@ -391,7 +423,7 @@ export function QrCodePreview() {
       containerRef.current.innerHTML = "";
       instance.append(containerRef.current);
       registerDownloadApi({
-        download: async ({ extension, size, name }) => {
+        download: async ({ extension, size, colorSpace, name }) => {
           const currentSize = sizeRef.current;
           const exportSize = Number.isFinite(size) ? size : currentSize;
           if (exportSize !== currentSize) {
@@ -399,14 +431,56 @@ export function QrCodePreview() {
           }
           const d = docRef.current;
           const includeDetails = !!d.showActionDetails;
-          const outExt = extension === "jpeg" ? "jpg" : extension;
+          const outExt =
+            extension === "jpeg" ? "jpg" : extension === "tiff" ? "tif" : extension;
 
           if (!includeDetails) {
-            const raw: Blob = await (instance as any).getRawData(extension);
-            downloadBlob({
-              blob: raw,
-              fileName: `${name || "qr-code"}.${outExt}`,
-            });
+            if (
+              colorSpace === "cmyk" &&
+              (extension === "jpeg" || extension === "tiff")
+            ) {
+              const svgBlob: Blob = await (instance as any).getRawData("svg");
+              const svgText = await svgBlob.text();
+              const outBlob = await convertSvgViaApi({
+                svg: svgText,
+                format: extension,
+                colorSpace,
+                width: exportSize,
+                height: exportSize,
+                name: name || "qr-code",
+              });
+              downloadBlob({
+                blob: outBlob,
+                fileName: `${name || "qr-code"}.${outExt}`,
+              });
+              if (exportSize !== currentSize) {
+                instance.update({ width: currentSize, height: currentSize });
+              }
+              return;
+            }
+            if (extension === "tiff") {
+              const qrBlob: Blob = await (instance as any).getRawData("png");
+              const qrImg = await loadImageFromBlob(qrBlob);
+              const canvas = document.createElement("canvas");
+              canvas.width = exportSize;
+              canvas.height = exportSize;
+              const ctx = canvas.getContext("2d");
+              if (!ctx) return;
+              ctx.fillStyle = "#ffffff";
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              ctx.drawImage(qrImg, 0, 0, exportSize, exportSize);
+              const tiffBlob = canvasToTiffBlob(canvas);
+              downloadBlob({
+                blob: tiffBlob,
+                fileName: `${name || "qr-code"}.${outExt}`,
+              });
+            } else {
+              const raw: Blob = await (instance as any).getRawData(extension);
+              downloadBlob({
+                blob: raw,
+                fileName: `${name || "qr-code"}.${outExt}`,
+              });
+            }
             if (exportSize !== currentSize) {
               instance.update({ width: currentSize, height: currentSize });
             }
@@ -426,9 +500,13 @@ export function QrCodePreview() {
           const border = "#DDD6FE";
           const cardBg = "#F5F3FF";
           const innerBg = "#ffffff";
-          const detailsBg = "#F8FAFF";
+          const detailsBg = "#ffffff";
 
-          if (extension === "svg") {
+          if (
+            extension === "svg" ||
+            (colorSpace === "cmyk" &&
+              (extension === "jpeg" || extension === "tiff"))
+          ) {
             const svgBlob: Blob = await (instance as any).getRawData("svg");
             const svgText = await svgBlob.text();
             const { inner, viewBox } = extractSvgInner(svgText);
@@ -475,7 +553,7 @@ export function QrCodePreview() {
             const line1 = Math.round(22 * scale);
 
             const titleSvg = title
-              ? `<text x="${textX}" y="${y + Math.round(44 * scale)}" font-family="system-ui, -apple-system, Segoe UI, Roboto" font-size="${titleSize}" font-weight="700" fill="rgba(0,0,0,0.85)">${safe(
+              ? `<text x="${textX}" y="${y + Math.round(44 * scale)}" font-family="system-ui, -apple-system, Segoe UI, Roboto" font-size="${titleSize}" font-weight="700" fill="rgba(0,0,0,0.92)">${safe(
                   title,
                 )}</text>`
               : "";
@@ -484,14 +562,14 @@ export function QrCodePreview() {
               .map((line, i) => {
                 const yy =
                   y + Math.round(72 * scale) + i * Math.round(18 * scale);
-                return `<text x="${textX}" y="${yy}" font-family="system-ui, -apple-system, Segoe UI, Roboto" font-size="${descSize}" font-weight="400" fill="rgba(0,0,0,0.6)">${safe(
+                return `<text x="${textX}" y="${yy}" font-family="system-ui, -apple-system, Segoe UI, Roboto" font-size="${descSize}" font-weight="400" fill="rgba(0,0,0,0.72)">${safe(
                   line,
                 )}</text>`;
               })
               .join("");
 
             const svgOut = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${cardWidth}" height="${cardHeight}" viewBox="0 0 ${cardWidth} ${cardHeight}">
+<svg xmlns="http://www.w3.org/2000/svg" width="${cardWidth}" height="${cardHeight}" viewBox="0 0 ${cardWidth} ${cardHeight}" data-color-space="${colorSpace}">
   <rect x="0.5" y="0.5" width="${cardWidth - 1}" height="${cardHeight - 1}" rx="${radius}" fill="${cardBg}" stroke="${border}" />
   <rect x="${pad}" y="${pad}" width="${exportSize}" height="${exportSize}" rx="${clamp(Math.round(radius * 0.7), 12, 28)}" fill="${innerBg}" stroke="${border}" />
   <g transform="translate(${pad} ${pad})">
@@ -504,20 +582,35 @@ export function QrCodePreview() {
   <g transform="translate(${iconX} ${y - iconSize + 4})">
     ${iconSvg({ type: d.type, size: iconSize, stroke: "rgba(0,0,0,0.85)", strokeWidth: iconStroke })}
   </g>
-  <text x="${textX}" y="${y}" font-family="system-ui, -apple-system, Segoe UI, Roboto" font-size="${labelSize}" font-weight="700" fill="rgba(0,0,0,0.85)">${safe(
+  <text x="${textX}" y="${y}" font-family="system-ui, -apple-system, Segoe UI, Roboto" font-size="${labelSize}" font-weight="800" fill="rgba(0,0,0,0.92)">${safe(
     `${label}`,
   )}</text>
-  <text x="${textX}" y="${y + line1}" font-family="system-ui, -apple-system, Segoe UI, Roboto" font-size="${detailSize}" font-weight="400" fill="rgba(0,0,0,0.6)">${safe(
+  <text x="${textX}" y="${y + line1}" font-family="system-ui, -apple-system, Segoe UI, Roboto" font-size="${detailSize}" font-weight="500" fill="rgba(0,0,0,0.78)">${safe(
     detail,
   )}</text>
   ${titleSvg}
   ${descSvg}
 </svg>`;
 
-            downloadBlob({
-              blob: new Blob([svgOut], { type: "image/svg+xml" }),
-              fileName: `${name || "qr-code"}.svg`,
-            });
+            if (extension === "svg") {
+              downloadBlob({
+                blob: new Blob([svgOut], { type: "image/svg+xml" }),
+                fileName: `${name || "qr-code"}.svg`,
+              });
+            } else {
+              const outBlob = await convertSvgViaApi({
+                svg: svgOut,
+                format: extension,
+                colorSpace,
+                width: cardWidth,
+                height: cardHeight,
+                name: name || "qr-code",
+              });
+              downloadBlob({
+                blob: outBlob,
+                fileName: `${name || "qr-code"}.${outExt}`,
+              });
+            }
 
             if (exportSize !== currentSize) {
               instance.update({ width: currentSize, height: currentSize });
@@ -610,30 +703,42 @@ export function QrCodePreview() {
           const iconImg = await loadImageFromBlob(iconBlob);
           ctx.drawImage(iconImg, textX, y - iconSize + 4, iconSize, iconSize);
 
-          ctx.fillStyle = "rgba(0,0,0,0.85)";
-          ctx.font = `700 ${clamp(Math.round(14 * scale), 12, 18)}px system-ui, -apple-system, Segoe UI, Roboto`;
+          ctx.fillStyle = "rgba(0,0,0,0.92)";
+          ctx.font = `800 ${clamp(Math.round(14 * scale), 12, 18)}px system-ui, -apple-system, Segoe UI, Roboto`;
           ctx.fillText(label, textX + iconSize + Math.round(10 * scale), y);
           y += 22;
 
-          ctx.fillStyle = "rgba(0,0,0,0.6)";
-          ctx.font = `400 ${clamp(Math.round(13 * scale), 11, 18)}px system-ui, -apple-system, Segoe UI, Roboto`;
+          ctx.fillStyle = "rgba(0,0,0,0.78)";
+          ctx.font = `500 ${clamp(Math.round(13 * scale), 11, 18)}px system-ui, -apple-system, Segoe UI, Roboto`;
           ctx.fillText(detail, textX, y);
           y += 22;
 
           if (title) {
-            ctx.fillStyle = "rgba(0,0,0,0.85)";
+            ctx.fillStyle = "rgba(0,0,0,0.92)";
             ctx.font = `800 ${clamp(Math.round(18 * scale), 14, 24)}px system-ui, -apple-system, Segoe UI, Roboto`;
             ctx.fillText(title, textX, y + Math.round(6 * scale));
             y += Math.round(30 * scale);
           }
 
           if (descLines.length) {
-            ctx.fillStyle = "rgba(0,0,0,0.6)";
+            ctx.fillStyle = "rgba(0,0,0,0.72)";
             ctx.font = `400 ${clamp(Math.round(13 * scale), 11, 18)}px system-ui, -apple-system, Segoe UI, Roboto`;
             for (const line of descLines) {
               ctx.fillText(line, textX, y + Math.round(4 * scale));
               y += Math.round(18 * scale);
             }
+          }
+
+          if (extension === "tiff") {
+            const tiffBlob = canvasToTiffBlob(canvas);
+            downloadBlob({
+              blob: tiffBlob,
+              fileName: `${name || "qr-code"}.${outExt}`,
+            });
+            if (exportSize !== currentSize) {
+              instance.update({ width: currentSize, height: currentSize });
+            }
+            return;
           }
 
           const mime = extension === "jpeg" ? "image/jpeg" : "image/png";
@@ -701,13 +806,13 @@ export function QrCodePreview() {
               />
               <div
                 className="rounded-2xl border p-5"
-                style={{ backgroundColor: "#F8FAFF", borderColor: "#DDD6FE" }}
+                style={{ backgroundColor: "#ffffff", borderColor: "#DDD6FE" }}
               >
                 <div className="flex items-center gap-2 text-sm font-semibold">
                   <TypeIcon className="h-4 w-4 text-foreground" />
                   <div className="text-base">{typeLabel}</div>
                 </div>
-                <div className="mt-1 text-sm text-muted-foreground break-words">
+                <div className="mt-1 text-sm text-foreground/75 break-words">
                   {detailsValue}
                 </div>
                 {(doc.captionTitle || "").trim() ? (
@@ -716,7 +821,7 @@ export function QrCodePreview() {
                   </div>
                 ) : null}
                 {(doc.captionDescription || "").trim() ? (
-                  <div className="mt-1 text-sm text-muted-foreground whitespace-pre-wrap">
+                  <div className="mt-1 text-sm text-foreground/70 whitespace-pre-wrap">
                     {(doc.captionDescription || "").trim()}
                   </div>
                 ) : null}

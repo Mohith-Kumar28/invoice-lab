@@ -20,7 +20,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { buildQrFileName } from "@/features/qr-code-editor/lib/qr-filename";
+import { buildQrFileName, withQrFileVariant } from "@/features/qr-code-editor/lib/qr-filename";
 import { useQrCodeStore } from "@/features/qr-code-editor/store/qr-code.store";
 import type { QrCodeDoc } from "@/features/qr-code-editor/types/qr-code.types";
 import { SavedQrCodesList } from "@/features/saved-items/qr-codes/SavedQrCodesList";
@@ -104,6 +104,7 @@ export function QrCodeActions() {
       file_type: extension,
       qr_type: doc.type,
       size: exportSettings.size,
+      color_space: exportSettings.colorSpace,
       show_action_details: doc.showActionDetails,
       path: typeof window !== "undefined" ? window.location.pathname : "",
     });
@@ -190,19 +191,44 @@ export function QrCodeActions() {
             <DropdownMenuSeparator />
 
             <DropdownMenuGroup>
+              <DropdownMenuLabel>Color Space</DropdownMenuLabel>
+              <DropdownMenuRadioGroup
+                value={exportSettings.colorSpace}
+                onValueChange={(val) =>
+                  setExportSettings({
+                    colorSpace: val === "cmyk" ? "cmyk" : "rgb",
+                  })
+                }
+              >
+                <DropdownMenuRadioItem value="rgb">RGB</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="cmyk">
+                  CMYK (SVG/TIFF)
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuGroup>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuGroup>
               <DropdownMenuLabel>Download Format</DropdownMenuLabel>
               <div className="px-1.5 py-1">
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <Button
                     type="button"
                     variant="secondary"
                     size="sm"
+                    disabled={exportSettings.colorSpace === "cmyk"}
                     onClick={() => {
                       if (!validate()) return;
                       trackDownloadClick("png");
                       setExportSettings({ extension: "png" });
                       setDownloadOpen(false);
-                      download(buildQrFileName(doc));
+                      download(
+                        withQrFileVariant(
+                          buildQrFileName(doc),
+                          exportSettings.colorSpace,
+                        ),
+                      );
                     }}
                   >
                     PNG
@@ -216,7 +242,12 @@ export function QrCodeActions() {
                       trackDownloadClick("jpeg");
                       setExportSettings({ extension: "jpeg" });
                       setDownloadOpen(false);
-                      download(buildQrFileName(doc));
+                      download(
+                        withQrFileVariant(
+                          buildQrFileName(doc),
+                          exportSettings.colorSpace,
+                        ),
+                      );
                     }}
                   >
                     JPEG
@@ -227,10 +258,34 @@ export function QrCodeActions() {
                     size="sm"
                     onClick={() => {
                       if (!validate()) return;
+                      trackDownloadClick("tiff");
+                      setExportSettings({ extension: "tiff" });
+                      setDownloadOpen(false);
+                      download(
+                        withQrFileVariant(
+                          buildQrFileName(doc),
+                          exportSettings.colorSpace,
+                        ),
+                      );
+                    }}
+                  >
+                    TIFF
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      if (!validate()) return;
                       trackDownloadClick("svg");
                       setExportSettings({ extension: "svg" });
                       setDownloadOpen(false);
-                      download(buildQrFileName(doc));
+                      download(
+                        withQrFileVariant(
+                          buildQrFileName(doc),
+                          exportSettings.colorSpace,
+                        ),
+                      );
                     }}
                   >
                     SVG

@@ -73,3 +73,11 @@ export function buildQrFileName(doc: QrCodeDoc) {
   }
   return `${prefix}-${slugify(doc.type) || "code"}`;
 }
+
+export function withQrFileVariant(
+  baseName: string,
+  variant: string | undefined,
+) {
+  const v = slugify(variant || "");
+  return v ? `${baseName}-${v}` : baseName;
+}
