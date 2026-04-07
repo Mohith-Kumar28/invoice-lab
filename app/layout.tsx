@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { Footer } from "@/components/layout/Footer";
@@ -56,6 +57,10 @@ export default function RootLayout({
           <Footer />
           {useGtm ? <GoogleTagManager /> : null}
         </ThemeProvider>
+        <Script
+          src="https://buttons.github.io/buttons.js"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );

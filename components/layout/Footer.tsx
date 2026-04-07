@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GitHubIssueButton } from "@/components/shared/GitHubIssueButton";
 import { APP_NAME } from "@/lib/site";
 
 const TOOL_LINKS = [
@@ -20,6 +21,7 @@ const TOOL_LINKS = [
 ] as const;
 
 const SEO_LINKS = [
+  { label: "About", href: "/" },
   { label: "robots.txt", href: "/robots.txt" },
   { label: "sitemap.xml", href: "/sitemap.xml" },
   { label: "llms.txt", href: "/llms.txt" },
@@ -113,6 +115,9 @@ export function Footer() {
                 >
                   FAQ
                 </Link>
+              </li>
+              <li className="pt-1">
+                <GitHubIssueButton />
               </li>
             </ul>
           </div>

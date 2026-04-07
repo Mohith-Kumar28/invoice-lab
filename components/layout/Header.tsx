@@ -1,5 +1,6 @@
 import { FileText } from "lucide-react";
 import Link from "next/link";
+import { GitHubIssueButton } from "@/components/shared/GitHubIssueButton";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { APP_NAME } from "@/lib/site";
 import { TOOL_NAV_LINKS } from "@/lib/tools";
@@ -27,13 +28,8 @@ export function Header() {
               {l.label}
             </Link>
           ))}
-          <Link
-            href="/"
-            className="transition-colors hover:text-foreground/80 text-foreground/60"
-          >
-            About
-          </Link>
           <ThemeToggle />
+          <GitHubIssueButton />
         </nav>
       </div>
     </header>
