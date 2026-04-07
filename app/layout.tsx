@@ -6,6 +6,7 @@ import { GoogleTag } from "@/components/shared/GoogleTag";
 import { GoogleTagManager } from "@/components/shared/GoogleTagManager";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import { APP_NAME } from "@/lib/site";
+import { Analytics } from "@vercel/analytics/next"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -31,6 +32,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} font-sans antialiased min-h-screen flex flex-col`}
       >
+        <Analytics />
         {useGtm ? (
           <noscript>
             <iframe
