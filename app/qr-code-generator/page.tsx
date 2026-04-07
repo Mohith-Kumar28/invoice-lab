@@ -209,6 +209,14 @@ export default function QrCodeGeneratorLandingPage() {
                     </div>
                     <div className="grid grid-cols-5 gap-3">
                       <dt className="col-span-2 text-muted-foreground">
+                        Customize
+                      </dt>
+                      <dd className="col-span-3">
+                        Colors, shapes, dots/corners, and logo
+                      </dd>
+                    </div>
+                    <div className="grid grid-cols-5 gap-3">
+                      <dt className="col-span-2 text-muted-foreground">
                         Storage
                       </dt>
                       <dd className="col-span-3">

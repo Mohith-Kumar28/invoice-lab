@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
+import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { GoogleTag } from "@/components/shared/GoogleTag";
 import { GoogleTagManager } from "@/components/shared/GoogleTagManager";
@@ -52,6 +53,7 @@ export default function RootLayout({
         >
           <Header />
           <main className="flex-1 flex flex-col">{children}</main>
+          <Footer />
           {useGtm ? <GoogleTagManager /> : null}
         </ThemeProvider>
       </body>
