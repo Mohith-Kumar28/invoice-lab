@@ -16,6 +16,7 @@ import { PayslipTemplate } from "@/features/payslip-editor/templates/PayslipTemp
 import { SavedPayslipsList } from "@/features/saved-items/payslips/SavedPayslipsList";
 import { useSavedPayslipsStore } from "@/features/saved-items/payslips/saved-payslips.store";
 import { useAutoSave } from "@/hooks/useAutoSave";
+import { trackEvent } from "@/lib/analytics";
 import { usePdfBrand } from "@/hooks/usePdfBrand";
 import type { Payslip } from "@/types/payslip.types";
 
@@ -48,6 +49,12 @@ export function PayslipActions() {
   };
 
   const handleDownload = async () => {
+    trackEvent("download_clicked", {
+      tool: "payslip_generator",
+      file_type: "pdf",
+      path: typeof window !== "undefined" ? window.location.pathname : "",
+    });
+
     const nextErrors: Record<string, string> = {};
     if (!payslip.employer.companyName?.trim())
       nextErrors["employer.companyName"] = "Company name is required.";

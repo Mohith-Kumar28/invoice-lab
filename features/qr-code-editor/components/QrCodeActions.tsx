@@ -26,6 +26,7 @@ import { SavedQrCodesList } from "@/features/saved-items/qr-codes/SavedQrCodesLi
 import { useAutoSave } from "@/hooks/useAutoSave";
 import type { QrCodeDoc } from "@/features/qr-code-editor/types/qr-code.types";
 import { buildQrFileName } from "@/features/qr-code-editor/lib/qr-filename";
+import { trackEvent } from "@/lib/analytics";
 
 export function QrCodeActions() {
   const doc = useQrCodeStore((s) => s.doc);
@@ -92,6 +93,17 @@ export function QrCodeActions() {
     }
     clearErrors();
     return true;
+  };
+
+  const trackDownloadClick = (extension: string) => {
+    trackEvent("download_clicked", {
+      tool: "qr_code_generator",
+      file_type: extension,
+      qr_type: doc.type,
+      size: exportSettings.size,
+      show_action_details: doc.showActionDetails,
+      path: typeof window !== "undefined" ? window.location.pathname : "",
+    });
   };
 
   return (
@@ -184,6 +196,7 @@ export function QrCodeActions() {
                     size="sm"
                     onClick={() => {
                       if (!validate()) return;
+                      trackDownloadClick("png");
                       setExportSettings({ extension: "png" });
                       setDownloadOpen(false);
                       download(buildQrFileName(doc));
@@ -197,6 +210,7 @@ export function QrCodeActions() {
                     size="sm"
                     onClick={() => {
                       if (!validate()) return;
+                      trackDownloadClick("jpeg");
                       setExportSettings({ extension: "jpeg" });
                       setDownloadOpen(false);
                       download(buildQrFileName(doc));
@@ -210,6 +224,7 @@ export function QrCodeActions() {
                     size="sm"
                     onClick={() => {
                       if (!validate()) return;
+                      trackDownloadClick("svg");
                       setExportSettings({ extension: "svg" });
                       setDownloadOpen(false);
                       download(buildQrFileName(doc));

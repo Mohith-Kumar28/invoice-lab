@@ -34,6 +34,7 @@ import { SavedInvoicesList } from "@/features/saved-items/invoices/SavedInvoices
 import { useSavedInvoicesStore } from "@/features/saved-items/invoices/saved-invoices.store";
 import { type TemplateKey, templates } from "@/features/templates/renderers";
 import { useAutoSave } from "@/hooks/useAutoSave";
+import { trackEvent } from "@/lib/analytics";
 import { resolveCssVarColor } from "@/lib/css-vars";
 import type { Invoice } from "@/types/invoice.types";
 
@@ -92,6 +93,15 @@ export function GlobalActions() {
   });
 
   const handleDownload = async () => {
+    trackEvent("download_clicked", {
+      tool: "invoice_generator",
+      file_type: "pdf",
+      template: invoice.template || "modern",
+      currency: invoice.currency || "",
+      line_items_count: (invoice.lineItems || []).length,
+      path: typeof window !== "undefined" ? window.location.pathname : "",
+    });
+
     const nextErrors: Record<string, string> = {};
     const email = invoice.from?.email || "";
     const hasEmail = !!email.trim();
