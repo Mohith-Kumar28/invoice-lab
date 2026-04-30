@@ -1,6 +1,7 @@
 "use client";
 
 import GitHubButton from "react-github-btn";
+import { GITHUB_ISSUES_URL } from "@/lib/site";
 
 export function GitHubIssueButton({
   size = "large",
@@ -11,7 +12,7 @@ export function GitHubIssueButton({
 }) {
   return (
     <GitHubButton
-      href="https://github.com/Mohith-Kumar28/invoice-lab/issues"
+      href={GITHUB_ISSUES_URL}
       data-color-scheme="no-preference: light; light: light; dark: dark;"
       data-size={size}
       data-show-count={showCount ? "true" : "false"}

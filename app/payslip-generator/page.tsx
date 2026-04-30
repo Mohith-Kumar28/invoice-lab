@@ -2,15 +2,20 @@ import {
   ArrowRight,
   BadgeCheck,
   FileSignature,
-  Globe,
   Lock,
-  Printer,
-  ShieldCheck,
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { MarketingHero } from "@/components/marketing/MarketingHero";
+import { MarketingSection } from "@/components/marketing/MarketingSection";
+import { PayslipVisual } from "@/components/marketing/ToolVisuals";
 import { Button } from "@/components/ui/button";
-import { APP_NAME, SITE_URL } from "@/lib/site";
+import {
+  APP_NAME,
+  GITHUB_ISSUES_URL,
+  GITHUB_REPO_URL,
+  SITE_URL,
+} from "@/lib/site";
 
 const CANONICAL_URL = `${SITE_URL}/payslip-generator`;
 
@@ -40,6 +45,18 @@ const FAQ = [
   {
     q: "Can I share a payslip draft?",
     a: "Yes. You can share a link that opens the same payslip draft on another device (without uploading your payslip data to a backend).",
+  },
+  {
+    q: "Why did you build this payslip generator?",
+    a: "I built it to generate clean, consistent salary slips quickly, with local-first drafts and simple PDF export.",
+  },
+  {
+    q: "Is this open source? Can I contribute?",
+    a: `Yes. It’s open source and you can contribute features or fixes on GitHub: ${GITHUB_REPO_URL}`,
+  },
+  {
+    q: "Where can I request features or report issues?",
+    a: `Please open an issue on GitHub: ${GITHUB_ISSUES_URL}`,
   },
 ] as const;
 
@@ -100,225 +117,108 @@ export default function PayslipGeneratorLandingPage() {
         {JSON.stringify(softwareJsonLd)}
       </script>
 
-      <header className="relative overflow-hidden border-b">
-        <div className="absolute inset-0 bg-[radial-gradient(900px_circle_at_20%_-10%,hsl(var(--primary))/0.16,transparent_55%),radial-gradient(900px_circle_at_80%_0%,hsl(var(--primary))/0.10,transparent_50%)]" />
-        <div className="container mx-auto px-4 md:px-6 py-10 md:py-16 relative">
-          <div className="grid gap-10 lg:grid-cols-12 lg:items-end">
-            <div className="lg:col-span-7">
-              <div className="inline-flex items-center gap-2 rounded-full border bg-background/60 px-3 py-1 text-sm text-muted-foreground">
-                <BadgeCheck className="h-4 w-4 text-primary" />
-                Payslip generator • Salary slip PDF • Local-first
-              </div>
+      <MarketingHero
+        badge={
+          <>
+            <BadgeCheck className="h-4 w-4 text-primary" />
+            Payslip generator • Salary slip PDF • Local-first
+          </>
+        }
+        title={
+          <>
+            Payslip Generator
+            <span className="text-muted-foreground"> — salary slip PDF</span>
+          </>
+        }
+        description="Generate a clean salary slip in minutes. Add employer/employee details, earnings and deductions, then export a PDF payslip for records."
+        primaryAction={{
+          href: "/payslip-generator/tool",
+          label: "Generate payslip",
+        }}
+        secondaryAction={{
+          href: "#payslip-features",
+          label: "Payslip features",
+          variant: "outline",
+        }}
+        bullets={[
+          {
+            icon: <FileSignature className="h-4 w-4" />,
+            text: `Templates: ${TEMPLATES.join(" · ")}`,
+          },
+          {
+            icon: <FileSignature className="h-4 w-4" />,
+            text: "PDF export + preview",
+          },
+          { icon: <Lock className="h-4 w-4" />, text: "Local-first autosave" },
+          { icon: <Lock className="h-4 w-4" />, text: "Runs in your browser" },
+        ]}
+        visual={<PayslipVisual />}
+      />
 
-              <h1 className="mt-5 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-                Payslip Generator
-                <span className="text-muted-foreground">
-                  {" "}
-                  — Salary Slip PDF
-                </span>
-              </h1>
-
-              <p className="mt-4 max-w-2xl text-muted-foreground md:text-lg">
-                Generate a clean salary slip in minutes. Add employer/employee
-                details, earnings and deductions, then export a PDF payslip for
-                records.
-              </p>
-
-              <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                <Button
-                  nativeButton={false}
-                  render={<Link href="/payslip-generator/tool" />}
-                  size="lg"
-                  className="h-11 px-6"
-                >
-                  Generate payslip
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-                <Button
-                  nativeButton={false}
-                  render={<Link href="#payslip-features" />}
-                  variant="outline"
-                  size="lg"
-                  className="h-11 px-6"
-                >
-                  Payslip features
-                </Button>
-              </div>
-
-              <ul className="mt-8 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-                <li className="flex items-center gap-2">
-                  <FileSignature className="h-4 w-4 text-primary" />
-                  Payslip templates: {TEMPLATES.join(" · ")}
-                </li>
-                <li className="flex items-center gap-2">
-                  <Printer className="h-4 w-4 text-primary" />
-                  PDF export + print-ready output
-                </li>
-                <li className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4 text-primary" />
-                  Local-first autosave drafts
-                </li>
-                <li className="flex items-center gap-2">
-                  <Lock className="h-4 w-4 text-primary" />
-                  Runs in your browser (client-side)
-                </li>
-              </ul>
-            </div>
-
-            <aside className="lg:col-span-5">
-              <div className="rounded-xl border bg-background/70 backdrop-blur">
-                <div className="p-6">
-                  <h2 className="text-sm font-medium">
-                    Payslip generator specs
-                  </h2>
-                  <dl className="mt-4 grid gap-4 text-sm">
-                    <div className="grid grid-cols-5 gap-3">
-                      <dt className="col-span-2 text-muted-foreground">
-                        Input
-                      </dt>
-                      <dd className="col-span-3">
-                        Employer + employee details, pay period, earnings,
-                        deductions, totals, signature
-                      </dd>
-                    </div>
-                    <div className="grid grid-cols-5 gap-3">
-                      <dt className="col-span-2 text-muted-foreground">
-                        Output
-                      </dt>
-                      <dd className="col-span-3">
-                        Salary slip PDF (payslip PDF) download + preview
-                      </dd>
-                    </div>
-                    <div className="grid grid-cols-5 gap-3">
-                      <dt className="col-span-2 text-muted-foreground">
-                        Templates
-                      </dt>
-                      <dd className="col-span-3">{TEMPLATES.join(" · ")}</dd>
-                    </div>
-                    <div className="grid grid-cols-5 gap-3">
-                      <dt className="col-span-2 text-muted-foreground">
-                        Privacy
-                      </dt>
-                      <dd className="col-span-3">
-                        Local-first storage in your browser
-                      </dd>
-                    </div>
-                    <div className="grid grid-cols-5 gap-3">
-                      <dt className="col-span-2 text-muted-foreground">
-                        Autosave
-                      </dt>
-                      <dd className="col-span-3">
-                        Changes auto-save and drafts are restored on refresh
-                      </dd>
-                    </div>
-                    <div className="grid grid-cols-5 gap-3">
-                      <dt className="col-span-2 text-muted-foreground">
-                        Saved
-                      </dt>
-                      <dd className="col-span-3">
-                        Last 50 payslips saved locally for quick reuse
-                      </dd>
-                    </div>
-                    <div className="grid grid-cols-5 gap-3">
-                      <dt className="col-span-2 text-muted-foreground">
-                        Share
-                      </dt>
-                      <dd className="col-span-3">
-                        Share a link to open the same payslip draft
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-              </div>
-            </aside>
+      <MarketingSection
+        id="payslip-features"
+        title="Clean payslips with a clear breakdown"
+        description="Generate salary slips with earnings and deductions, then export a consistent PDF."
+      >
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="rounded-2xl border border-border/40 bg-background/60 backdrop-blur p-6">
+            <h3 className="text-lg font-semibold">Details included</h3>
+            <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+              <li>Employer + employee details</li>
+              <li>Pay period and payment date</li>
+              <li>Earnings, deductions, totals</li>
+              <li>Net pay summary</li>
+              <li>Optional signature on PDF</li>
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-border/40 bg-background/60 backdrop-blur p-6">
+            <h3 className="text-lg font-semibold">Output + storage</h3>
+            <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+              <li>PDF payslip preview + download</li>
+              <li>Local-first autosave in browser storage</li>
+              <li>Saved payslips list for quick reuse</li>
+              <li>No signup, no backend storage</li>
+              <li>Share a link to open the same payslip draft</li>
+            </ul>
           </div>
         </div>
-      </header>
 
-      <section id="payslip-features" className="w-full">
-        <div className="container mx-auto px-4 md:px-6 py-12 md:py-16">
-          <div className="grid gap-10 lg:grid-cols-12">
-            <div className="lg:col-span-5">
-              <h2 className="text-2xl font-bold tracking-tight">
-                Payslip generator features for payroll records
-              </h2>
-              <p className="mt-3 text-muted-foreground">
-                Use this salary slip generator to create payslips with a clear
-                earnings and deductions breakdown, then export a salary slip
-                PDF.
-              </p>
-              <div className="mt-6 border-t pt-6 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-primary" />
-                  Fully client-side. Runs in your browser, and the project is
-                  designed to be open-source.
-                </div>
-              </div>
-            </div>
-
-            <div className="lg:col-span-7">
-              <div className="grid gap-8 md:grid-cols-2">
-                <article className="space-y-3">
-                  <h3 className="text-lg font-semibold">Details included</h3>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li>Employer + employee details</li>
-                    <li>Pay period and payment date</li>
-                    <li>Earnings, deductions, totals</li>
-                    <li>Net pay summary</li>
-                    <li>Optional signature on PDF</li>
-                  </ul>
-                </article>
-
-                <article className="space-y-3">
-                  <h3 className="text-lg font-semibold">Output + storage</h3>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li>PDF payslip preview + PDF download</li>
-                    <li>Local-first autosave in browser storage</li>
-                    <li>Saved payslips list (last 50) for quick reuse</li>
-                    <li>No signup, no backend storage</li>
-                    <li>Share a link to open the same payslip draft</li>
-                  </ul>
-                </article>
-              </div>
-
-              <div className="mt-10 rounded-xl border bg-muted/10 p-6">
-                <h3 className="text-lg font-semibold">Payslip templates</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Choose a payslip template style and export a consistent salary
-                  slip PDF every time.
-                </p>
-                <ul className="mt-4 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-                  {TEMPLATES.map((t) => (
-                    <li key={t} className="flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="mt-10 flex flex-col sm:flex-row gap-3">
-                <Button
-                  nativeButton={false}
-                  render={<Link href="/payslip-generator/tool" />}
-                  className="h-11 px-6"
-                >
-                  Generate salary slip PDF
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-                <Button
-                  nativeButton={false}
-                  render={<Link href="#faq" />}
-                  variant="outline"
-                  className="h-11 px-6"
-                >
-                  Payslip generator FAQ
-                </Button>
-              </div>
-            </div>
+        <div className="mt-8 rounded-2xl border border-border/40 bg-[radial-gradient(900px_circle_at_15%_0%,hsl(var(--secondary))/0.12,transparent_55%)] p-6">
+          <h3 className="text-lg font-semibold">Payslip templates</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Choose a payslip template style and export a consistent salary slip
+            PDF every time.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {TEMPLATES.map((t) => (
+              <span
+                key={t}
+                className="inline-flex items-center rounded-full border border-border/40 bg-background/70 px-3 py-1 text-sm"
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+          <div className="mt-6 flex flex-col sm:flex-row gap-3">
+            <Button
+              nativeButton={false}
+              render={<Link href="/payslip-generator/tool" />}
+              className="h-11 px-6"
+            >
+              Generate salary slip PDF
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+            <Button
+              nativeButton={false}
+              render={<Link href="#faq" />}
+              variant="outline"
+              className="h-11 px-6"
+            >
+              Payslip generator FAQ
+            </Button>
           </div>
         </div>
-      </section>
+      </MarketingSection>
 
       <section id="faq" className="border-t bg-muted/10">
         <div className="container mx-auto px-4 md:px-6 py-10 md:py-14">
@@ -330,7 +230,7 @@ export default function PayslipGeneratorLandingPage() {
               </p>
             </div>
 
-            <div className="divide-y rounded-lg border bg-background">
+            <div className="divide-y rounded-2xl border border-border/40 bg-background/60 backdrop-blur">
               {FAQ.map((f) => (
                 <details key={f.q} className="p-5">
                   <summary className="cursor-pointer font-medium">
