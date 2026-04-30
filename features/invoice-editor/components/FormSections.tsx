@@ -302,6 +302,28 @@ export function Section2From() {
   const updateFrom = (fields: Partial<Invoice["from"]>) => {
     updateInvoice({ from: fields });
   };
+  const fromCustomFields = invoice.from?.customFields || [];
+  const addFromCustomField = () => {
+    updateFrom({
+      customFields: [
+        ...fromCustomFields,
+        { id: crypto.randomUUID(), label: "", value: "" },
+      ],
+    });
+  };
+  const updateFromCustomField = (
+    id: string,
+    patch: Partial<(typeof fromCustomFields)[number]>,
+  ) => {
+    updateFrom({
+      customFields: fromCustomFields.map((f) =>
+        f.id === id ? { ...f, ...patch } : f,
+      ),
+    });
+  };
+  const removeFromCustomField = (id: string) => {
+    updateFrom({ customFields: fromCustomFields.filter((f) => f.id !== id) });
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -366,6 +388,67 @@ export function Section2From() {
           value={invoice.from?.taxId || ""}
           onChange={(e) => updateFrom({ taxId: e.target.value })}
         />
+      </div>
+      <div className="md:col-span-2 space-y-2">
+        <div className="flex items-center justify-between gap-3">
+          <div />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="bg-primary/10 text-primary hover:bg-primary/20"
+            onClick={addFromCustomField}
+          >
+            <Plus className="h-4 w-4" />
+            Add custom fields
+          </Button>
+        </div>
+        {fromCustomFields.length > 0 ? (
+          <div className="border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[180px]">Field</TableHead>
+                  <TableHead>Value</TableHead>
+                  <TableHead className="w-[56px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {fromCustomFields.map((f) => (
+                  <TableRow key={f.id}>
+                    <TableCell>
+                      <Input
+                        value={f.label || ""}
+                        onChange={(e) =>
+                          updateFromCustomField(f.id, { label: e.target.value })
+                        }
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        value={f.value || ""}
+                        onChange={(e) =>
+                          updateFromCustomField(f.id, { value: e.target.value })
+                        }
+                      />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => removeFromCustomField(f.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <div />
+        )}
       </div>
       <div className="space-y-2 md:col-span-2">
         <Label>Address</Label>
@@ -453,6 +536,23 @@ export function Section3To() {
   const updateTo = (fields: Partial<Invoice["to"]>) => {
     updateInvoice({ to: fields });
   };
+  const toCustomFields = invoice.to?.customFields || [];
+  const addToCustomField = () => {
+    updateTo({
+      customFields: [...toCustomFields, { id: crypto.randomUUID(), label: "", value: "" }],
+    });
+  };
+  const updateToCustomField = (
+    id: string,
+    patch: Partial<(typeof toCustomFields)[number]>,
+  ) => {
+    updateTo({
+      customFields: toCustomFields.map((f) => (f.id === id ? { ...f, ...patch } : f)),
+    });
+  };
+  const removeToCustomField = (id: string) => {
+    updateTo({ customFields: toCustomFields.filter((f) => f.id !== id) });
+  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -509,6 +609,67 @@ export function Section3To() {
           value={invoice.to?.taxId || ""}
           onChange={(e) => updateTo({ taxId: e.target.value })}
         />
+      </div>
+      <div className="md:col-span-2 space-y-2">
+        <div className="flex items-center justify-between gap-3">
+          <div />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="bg-primary/10 text-primary hover:bg-primary/20"
+            onClick={addToCustomField}
+          >
+            <Plus className="h-4 w-4" />
+            Add custom fields
+          </Button>
+        </div>
+        {toCustomFields.length > 0 ? (
+          <div className="border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[180px]">Field</TableHead>
+                  <TableHead>Value</TableHead>
+                  <TableHead className="w-[56px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {toCustomFields.map((f) => (
+                  <TableRow key={f.id}>
+                    <TableCell>
+                      <Input
+                        value={f.label || ""}
+                        onChange={(e) =>
+                          updateToCustomField(f.id, { label: e.target.value })
+                        }
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        value={f.value || ""}
+                        onChange={(e) =>
+                          updateToCustomField(f.id, { value: e.target.value })
+                        }
+                      />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => removeToCustomField(f.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <div />
+        )}
       </div>
       <div className="space-y-2 md:col-span-2">
         <Label>Client Address</Label>

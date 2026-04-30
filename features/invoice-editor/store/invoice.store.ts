@@ -42,11 +42,13 @@ function createDefaultInvoice(): Partial<Invoice> {
       businessName: "",
       email: "",
       address: { line1: "", city: "", country: "" },
+      customFields: [],
     },
 
     to: {
       businessName: "",
       address: { line1: "", city: "", country: "" },
+      customFields: [],
     },
 
     lineItems: [],

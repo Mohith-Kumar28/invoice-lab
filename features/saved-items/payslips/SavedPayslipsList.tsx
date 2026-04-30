@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { Edit, Trash2 } from "lucide-react";
+import { Copy, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePayslipStore } from "@/features/payslip-editor/store/payslip.store";
 import { SavedItemsList } from "@/features/saved-items/components/SavedItemsList";
@@ -28,7 +28,8 @@ function monthLabel(m: number) {
 }
 
 export function SavedPayslipsList({ onSelect }: { onSelect?: () => void }) {
-  const { items: payslips, deleteItem, clearAll } = useSavedPayslipsStore();
+  const { items: payslips, deleteItem, clearAll, saveItem } =
+    useSavedPayslipsStore();
   const { setPayslip } = usePayslipStore();
 
   return (
@@ -88,6 +89,21 @@ export function SavedPayslipsList({ onSelect }: { onSelect?: () => void }) {
                 >
                   <Edit className="h-3.5 w-3.5 mr-1.5" />
                   Edit
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const next = structuredClone(p) as typeof p;
+                    next.id = crypto.randomUUID();
+                    saveItem(next as never);
+                    setPayslip(next);
+                    onSelect?.();
+                  }}
+                  className="h-8"
+                >
+                  <Copy className="h-3.5 w-3.5 mr-1.5" />
+                  Duplicate
                 </Button>
                 <Button
                   variant="ghost"

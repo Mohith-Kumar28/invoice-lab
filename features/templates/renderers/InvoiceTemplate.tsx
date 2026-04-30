@@ -58,6 +58,7 @@ function ensureFont() {
       },
     ],
   });
+  Font.registerHyphenationCallback((word) => [word]);
   registered = true;
 }
 
@@ -293,6 +294,14 @@ export function InvoiceTemplate({
   const t = getTokens(variant, themeColor);
   const brand = deriveBrandColors(themeColor);
   const stripe = invoice.pdfBrand || brand;
+  const topRibbonHeight = 30;
+  const topStripeHeight = 4;
+  const issueDateText = invoice.issueDate
+    ? new Date(invoice.issueDate).toLocaleDateString()
+    : "";
+  const dueDateText = invoice.dueDate
+    ? new Date(invoice.dueDate).toLocaleDateString()
+    : "";
 
   const hasNotes = !!String(invoice.notes || "").trim();
   const hasDeliverables = !!String(invoice.deliverables || "").trim();
@@ -335,29 +344,52 @@ export function InvoiceTemplate({
       flexDirection: "column",
       backgroundColor: t.pageBg,
       fontFamily: "NotoSans",
-      paddingTop: 8,
+      paddingTop: topRibbonHeight,
+      paddingHorizontal: 32,
+      paddingBottom: 56,
     },
     topStripe: {
       position: "absolute",
       top: 0,
       left: 0,
       right: 0,
-      height: 4,
+      height: topStripeHeight,
       flexDirection: "row",
       opacity: 0.55,
     },
+    topRibbon: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      height: topRibbonHeight,
+      paddingTop: topStripeHeight,
+      paddingHorizontal: 32,
+      backgroundColor: t.pageBg,
+      borderBottomWidth: 1,
+      borderBottomColor: t.divider,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    topRibbonLeft: { fontSize: 9, color: t.bodyText, fontWeight: 700 },
+    topRibbonRight: { fontSize: 9, color: t.mutedText },
     stripePrimary: { flex: 6 },
     stripeSecondary: { flex: 3 },
     stripeAccent: { flex: 1 },
     headerBand: {
       backgroundColor: t.headerBg,
-      padding: 24,
+      marginHorizontal: -32,
+      paddingVertical: 24,
+      paddingHorizontal: 32,
       flexDirection: "row",
       justifyContent: "space-between",
       color: t.headerFg,
     },
     headerPlain: {
-      padding: 24,
+      marginHorizontal: -32,
+      paddingVertical: 24,
+      paddingHorizontal: 32,
       flexDirection: "row",
       justifyContent: "space-between",
     },
@@ -387,8 +419,7 @@ export function InvoiceTemplate({
     },
     statusText: { fontSize: 9, fontWeight: 700 },
     content: {
-      padding: 32,
-      paddingBottom: 56,
+      paddingTop: 24,
     },
     section: {
       flexDirection: "row",
@@ -404,10 +435,11 @@ export function InvoiceTemplate({
     },
     addressCol: { flex: 1 },
     label: {
-      fontSize: 10,
+      fontSize: 7,
       color: t.mutedText,
-      marginBottom: 4,
+      marginBottom: 3,
       textTransform: "uppercase",
+      letterSpacing: 0.4,
     },
     businessName: {
       fontSize: 16,
@@ -443,7 +475,7 @@ export function InvoiceTemplate({
       borderBottomColor: t.tableRowDivider,
     },
     td: { fontSize: 10, color: t.bodyText },
-    totals: { width: "44%", alignSelf: "flex-end", marginTop: 8 },
+    totals: { width: "44%", alignSelf: "flex-end", marginTop: 8, marginBottom: 18 },
     totalRow: {
       flexDirection: "row",
       justifyContent: "space-between",
@@ -506,11 +538,16 @@ export function InvoiceTemplate({
     bottomRight: { textAlign: "right" },
     kvRow: {
       flexDirection: "row",
-      justifyContent: "space-between",
-      marginBottom: 4,
+      justifyContent: "flex-start",
+      marginBottom: 8,
     },
-    kvKey: { fontSize: 10, color: t.mutedText },
-    kvVal: { fontSize: 10, color: t.bodyText, textAlign: "right" },
+    kvKey: { width: 110, fontSize: 10, color: t.mutedText },
+    kvVal: {
+      flex: 1,
+      fontSize: 10,
+      color: t.bodyText,
+      textAlign: "left",
+    },
     qrBox: {
       marginTop: 10,
       flexDirection: "row",
@@ -646,7 +683,29 @@ export function InvoiceTemplate({
             />
           </View>
         ) : null}
-        {Header}
+        <View
+          render={({ pageNumber }) =>
+            pageNumber > 1 ? (
+              <View fixed style={styles.topRibbon}>
+                <Text style={styles.topRibbonLeft}>
+                  {invoice.invoiceNumber || ""}
+                </Text>
+                <Text style={styles.topRibbonRight}>
+                  {issueDateText ? `Issue ${issueDateText}` : ""}
+                  {issueDateText && dueDateText ? "  •  " : ""}
+                  {dueDateText ? `Due ${dueDateText}` : ""}
+                </Text>
+              </View>
+            ) : null
+          }
+        />
+        <View
+          render={({ pageNumber }) =>
+            pageNumber === 1 ? (
+              <View style={{ marginTop: -topRibbonHeight }}>{Header}</View>
+            ) : null
+          }
+        />
 
         <View style={styles.content}>
           <View style={styles.section}>
@@ -676,6 +735,18 @@ export function InvoiceTemplate({
                       Tax ID: {invoice.from.taxId}
                     </Text>
                   )}
+                  {(invoice.from?.customFields || [])
+                    .map((f, idx) => ({
+                      key: f?.id || `${String(f?.label || "")}-${idx}`,
+                      label: String(f?.label || "").trim(),
+                      value: String(f?.value || "").trim(),
+                    }))
+                    .filter((f) => f.label && f.value)
+                    .map((f) => (
+                      <Text key={f.key} style={styles.addressText}>
+                        {f.label}: {f.value}
+                      </Text>
+                    ))}
                   {!!invoice.from?.address?.line1 && (
                     <Text style={styles.addressText}>
                       {invoice.from.address.line1}
@@ -725,6 +796,18 @@ export function InvoiceTemplate({
                       Tax ID: {invoice.to.taxId}
                     </Text>
                   )}
+                  {(invoice.to?.customFields || [])
+                    .map((f, idx) => ({
+                      key: f?.id || `${String(f?.label || "")}-${idx}`,
+                      label: String(f?.label || "").trim(),
+                      value: String(f?.value || "").trim(),
+                    }))
+                    .filter((f) => f.label && f.value)
+                    .map((f) => (
+                      <Text key={f.key} style={styles.addressText}>
+                        {f.label}: {f.value}
+                      </Text>
+                    ))}
                   {!!invoice.to?.address?.line1 && (
                     <Text style={styles.addressText}>
                       {invoice.to.address.line1}
@@ -784,7 +867,7 @@ export function InvoiceTemplate({
               </Text>
             </View>
             {lineItems.map((item) => (
-              <View key={item.id} style={styles.tr}>
+              <View key={item.id} style={styles.tr} wrap={false}>
                 <Text
                   style={[{ width: hasItemDetails ? "28%" : "46%" }, styles.td]}
                 >
@@ -905,7 +988,7 @@ export function InvoiceTemplate({
                   justifyContent: "space-between",
                 }}
               >
-                <View style={{ width: "48%" }}>
+                <View style={{ width: "52%" }}>
                   {hasNotes ? (
                     <View style={{ marginBottom: 14 }}>
                       <View style={styles.noteBox}>
@@ -1014,9 +1097,14 @@ export function InvoiceTemplate({
                   ) : null}
                 </View>
 
-                <View style={{ width: "48%" }}>
-                  <View>
-                    <Text style={styles.blockTitle}>Payment</Text>
+                <View
+                  style={{ width: "44%", alignSelf: "flex-end" }}
+                  wrap={false}
+                  minPresenceAhead={160}
+                >
+                    <Text style={[styles.blockTitle, { alignSelf: "flex-start" }]}>
+                      Payment
+                    </Text>
                     {!!invoice.paymentMethods?.length && (
                       <View style={styles.kvRow}>
                         <Text style={styles.kvKey}>Methods</Text>
@@ -1109,7 +1197,6 @@ export function InvoiceTemplate({
                         ) : null}
                       </View>
                     )}
-                  </View>
                 </View>
               </View>
             ) : (

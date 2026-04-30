@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { Edit, Trash2 } from "lucide-react";
+import { Copy, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useInvoiceStore } from "@/features/invoice-editor/store/invoice.store";
 import { SavedItemsList } from "@/features/saved-items/components/SavedItemsList";
@@ -9,7 +9,8 @@ import { useSavedInvoicesStore } from "@/features/saved-items/invoices/saved-inv
 import { formatMoney } from "@/lib/format";
 
 export function SavedInvoicesList({ onSelect }: { onSelect?: () => void }) {
-  const { items: invoices, deleteItem, clearAll } = useSavedInvoicesStore();
+  const { items: invoices, deleteItem, clearAll, saveItem } =
+    useSavedInvoicesStore();
   const { setInvoice } = useInvoiceStore();
 
   return (
@@ -67,6 +68,24 @@ export function SavedInvoicesList({ onSelect }: { onSelect?: () => void }) {
               >
                 <Edit className="h-3.5 w-3.5 mr-1.5" />
                 Edit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const next = structuredClone(inv) as typeof inv;
+                  next.id = crypto.randomUUID();
+                  next.invoiceNumber = next.invoiceNumber
+                    ? `${next.invoiceNumber}-COPY`
+                    : next.invoiceNumber;
+                  saveItem(next as never);
+                  setInvoice(next);
+                  onSelect?.();
+                }}
+                className="h-8"
+              >
+                <Copy className="h-3.5 w-3.5 mr-1.5" />
+                Duplicate
               </Button>
               <Button
                 variant="ghost"

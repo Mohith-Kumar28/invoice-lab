@@ -38,11 +38,15 @@ export function SignatureSection({
   const canvasWrapRef = React.useRef<HTMLDivElement | null>(null);
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
   const padRef = React.useRef<SignaturePad | null>(null);
+  const autoSaveTimeoutRef = React.useRef<number | null>(null);
 
   const resizeCanvas = React.useCallback(() => {
     const canvas = canvasRef.current;
     const wrap = canvasWrapRef.current;
     if (!canvas || !wrap) return;
+    const existing = padRef.current;
+    const signatureData =
+      existing && !existing.isEmpty() ? existing.toData() : null;
     const ratio = Math.max(window.devicePixelRatio || 1, 1);
     const width = wrap.clientWidth;
     if (!width) return;
@@ -56,7 +60,10 @@ export function SignatureSection({
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(ratio, ratio);
     }
-    padRef.current?.clear();
+    if (existing) {
+      existing.clear();
+      if (signatureData) existing.fromData(signatureData);
+    }
   }, []);
 
   React.useEffect(() => {
@@ -64,12 +71,24 @@ export function SignatureSection({
     const canvas = canvasRef.current;
     const wrap = canvasWrapRef.current;
     if (!canvas) return;
-    padRef.current = new SignaturePad(canvas, {
+    const pad = new SignaturePad(canvas, {
       backgroundColor: "rgb(255,255,255)",
       penColor: "rgb(17,24,39)",
       minWidth: 1,
       maxWidth: 2.5,
     });
+    padRef.current = pad;
+    const onEndStroke = () => {
+      const p = padRef.current;
+      if (!p || p.isEmpty()) return;
+      if (autoSaveTimeoutRef.current)
+        window.clearTimeout(autoSaveTimeoutRef.current);
+      autoSaveTimeoutRef.current = window.setTimeout(() => {
+        const next = padRef.current?.toDataURL("image/png");
+        if (next) onImageDataChange(next);
+      }, 150);
+    };
+    pad.addEventListener("endStroke", onEndStroke);
 
     let raf1 = 0;
     let raf2 = 0;
@@ -91,6 +110,10 @@ export function SignatureSection({
       cancelAnimationFrame(raf2);
       ro?.disconnect();
       window.removeEventListener("resize", onResize);
+      if (autoSaveTimeoutRef.current)
+        window.clearTimeout(autoSaveTimeoutRef.current);
+      autoSaveTimeoutRef.current = null;
+      padRef.current?.removeEventListener("endStroke", onEndStroke);
       padRef.current?.off();
       padRef.current = null;
     };

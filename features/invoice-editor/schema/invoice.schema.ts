@@ -46,6 +46,12 @@ export const partialPaymentSchema = z.object({
   note: z.string().optional(),
 });
 
+export const customFieldSchema = z.object({
+  id: z.string().uuid(),
+  label: z.string().optional().or(z.literal("")),
+  value: z.string().optional().or(z.literal("")),
+});
+
 export const invoiceSchema = z
   .object({
     id: z.string().uuid(),
@@ -71,6 +77,7 @@ export const invoiceSchema = z
       taxId: z.string().optional(),
       website: z.string().optional(),
       bankDetails: bankDetailsSchema.optional(),
+      customFields: z.array(customFieldSchema).optional(),
     }),
 
     to: z.object({
@@ -85,6 +92,7 @@ export const invoiceSchema = z
       address: addressSchema,
       taxId: z.string().optional(),
       poNumber: z.string().optional(),
+      customFields: z.array(customFieldSchema).optional(),
     }),
 
     lineItems: z.array(lineItemSchema),

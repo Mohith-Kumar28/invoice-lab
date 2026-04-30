@@ -30,6 +30,7 @@ export interface Invoice {
     address: Address;
     taxId?: string; // VAT/GST/EIN
     website?: string;
+    customFields?: CustomField[];
   };
 
   // Section 3: To (Client/Recipient)
@@ -41,6 +42,7 @@ export interface Invoice {
     phone?: string;
     address: Address;
     taxId?: string;
+    customFields?: CustomField[];
   };
 
   // Section 4: Line Items
@@ -130,6 +132,12 @@ export interface Address {
   state?: string;
   postalCode?: string;
   country: string;
+}
+
+export interface CustomField {
+  id: string;
+  label: string;
+  value: string;
 }
 
 export interface BankDetails {

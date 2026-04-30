@@ -1,7 +1,7 @@
 "use client";
 
 import { format } from "date-fns";
-import { Edit, Trash2 } from "lucide-react";
+import { Copy, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQrCodeStore } from "@/features/qr-code-editor/store/qr-code.store";
 import type { QrCodeDoc } from "@/features/qr-code-editor/types/qr-code.types";
@@ -37,7 +37,7 @@ function getSubtitle(item: QrCodeDoc) {
 }
 
 export function SavedQrCodesList({ onSelect }: { onSelect?: () => void }) {
-  const { items, deleteItem, clearAll } = useSavedQrCodesStore();
+  const { items, deleteItem, clearAll, saveItem } = useSavedQrCodesStore();
   const setDoc = useQrCodeStore((s) => s.setDoc);
 
   return (
@@ -87,6 +87,21 @@ export function SavedQrCodesList({ onSelect }: { onSelect?: () => void }) {
               >
                 <Edit className="h-3.5 w-3.5 mr-1.5" />
                 Edit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const next = structuredClone(item) as typeof item;
+                  next.id = crypto.randomUUID();
+                  saveItem(next as never);
+                  setDoc(next);
+                  onSelect?.();
+                }}
+                className="h-8"
+              >
+                <Copy className="h-3.5 w-3.5 mr-1.5" />
+                Duplicate
               </Button>
               <Button
                 variant="ghost"
