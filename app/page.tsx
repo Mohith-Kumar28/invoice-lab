@@ -114,16 +114,16 @@ export default function HomePage() {
         }
         description="Create invoices, payslips, and QR codes in minutes. Clean layouts, fast export, and a privacy-first workflow that stays on your device."
         primaryAction={{
-          href: "/invoice-generator",
+          href: "/invoice-generator/tool",
           label: "Create invoice",
         }}
         secondaryAction={{
-          href: "/payslip-generator",
+          href: "/payslip-generator/tool",
           label: "Generate payslip",
           variant: "outline",
         }}
         tertiaryAction={{
-          href: "/qr-code-generator",
+          href: "/qr-code-generator/tool",
           label: "Generate QR",
           variant: "outline",
         }}
@@ -170,7 +170,7 @@ export default function HomePage() {
           </div>
 
           <div className="mt-12 grid gap-8 lg:grid-cols-3">
-            <Link href="/invoice-generator" className="group">
+            <Link href="/invoice-generator/tool" className="group">
               <div className="rounded-2xl border border-border/40 bg-background/60 backdrop-blur overflow-hidden transition-shadow group-hover:shadow-md">
                 <div className="p-5">
                   <div className="text-sm font-medium">Invoice Generator</div>
@@ -187,7 +187,7 @@ export default function HomePage() {
               </div>
             </Link>
 
-            <Link href="/payslip-generator" className="group">
+            <Link href="/payslip-generator/tool" className="group">
               <div className="rounded-2xl border border-border/40 bg-background/60 backdrop-blur overflow-hidden transition-shadow group-hover:shadow-md">
                 <div className="p-5">
                   <div className="flex items-center gap-2">
@@ -209,7 +209,7 @@ export default function HomePage() {
               </div>
             </Link>
 
-            <Link href="/qr-code-generator" className="group">
+            <Link href="/qr-code-generator/tool" className="group">
               <div className="rounded-2xl border border-border/40 bg-background/60 backdrop-blur overflow-hidden transition-shadow group-hover:shadow-md">
                 <div className="p-5">
                   <div className="flex items-center gap-2">
@@ -310,7 +310,7 @@ export default function HomePage() {
             <div className="pt-2 flex flex-col sm:flex-row gap-3">
               <Button
                 nativeButton={false}
-                render={<Link href="/invoice-generator" />}
+                render={<Link href="/invoice-generator/tool" />}
                 size="lg"
                 className="h-11 px-6"
               >
@@ -319,7 +319,7 @@ export default function HomePage() {
               </Button>
               <Button
                 nativeButton={false}
-                render={<Link href="/qr-code-generator" />}
+                render={<Link href="/qr-code-generator/tool" />}
                 size="lg"
                 variant="outline"
                 className="h-11 px-6"
