@@ -9,7 +9,7 @@ import {
   Loader2,
   Share2,
 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -64,6 +64,7 @@ export function QrCodeActions() {
   const [shareOpen, setShareOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
   const [copied, setCopied] = useState(false);
+  const hasTrackedToolOpen = useRef(false);
 
   const handleAutoSave = useCallback(
     (q: QrCodeDoc) => {
@@ -77,6 +78,16 @@ export function QrCodeActions() {
     onSave: handleAutoSave,
     enabled: !!doc.id,
   });
+
+  useEffect(() => {
+    if (hasTrackedToolOpen.current) return;
+    hasTrackedToolOpen.current = true;
+    trackEvent("tool_opened", {
+      tool: "qr_code_generator",
+      qr_type: doc.type,
+      path: typeof window !== "undefined" ? window.location.pathname : "",
+    });
+  }, [doc.type]);
 
   const validate = () => {
     const nextErrors: Record<string, string> = {};
@@ -132,6 +143,51 @@ export function QrCodeActions() {
       show_action_details: doc.showActionDetails,
       path: typeof window !== "undefined" ? window.location.pathname : "",
     });
+  };
+
+  const handleDownload = async (extension: "png" | "jpeg" | "tiff" | "svg") => {
+    if (!validate()) {
+      trackEvent("download_failed", {
+        tool: "qr_code_generator",
+        file_type: extension,
+        status: "validation_failed",
+        error_type: "validation",
+        qr_type: doc.type,
+        path: typeof window !== "undefined" ? window.location.pathname : "",
+      });
+      return;
+    }
+
+    trackDownloadClick(extension);
+    setExportSettings({ extension });
+    setDownloadOpen(false);
+
+    try {
+      await download(
+        withQrFileVariant(buildQrFileName(doc), exportSettings.colorSpace),
+      );
+      trackEvent("download_succeeded", {
+        tool: "qr_code_generator",
+        file_type: extension,
+        qr_type: doc.type,
+        size: exportSettings.size,
+        color_space: exportSettings.colorSpace,
+        show_action_details: doc.showActionDetails,
+        path: typeof window !== "undefined" ? window.location.pathname : "",
+      });
+    } catch {
+      trackEvent("download_failed", {
+        tool: "qr_code_generator",
+        file_type: extension,
+        status: "generation_failed",
+        error_type: "qr_export",
+        qr_type: doc.type,
+        size: exportSettings.size,
+        color_space: exportSettings.colorSpace,
+        show_action_details: doc.showActionDetails,
+        path: typeof window !== "undefined" ? window.location.pathname : "",
+      });
+    }
   };
 
   const buildShareUrl = () => {
@@ -305,18 +361,7 @@ export function QrCodeActions() {
                     variant="secondary"
                     size="sm"
                     disabled={exportSettings.colorSpace === "cmyk"}
-                    onClick={() => {
-                      if (!validate()) return;
-                      trackDownloadClick("png");
-                      setExportSettings({ extension: "png" });
-                      setDownloadOpen(false);
-                      download(
-                        withQrFileVariant(
-                          buildQrFileName(doc),
-                          exportSettings.colorSpace,
-                        ),
-                      );
-                    }}
+                    onClick={() => void handleDownload("png")}
                   >
                     PNG
                   </Button>
@@ -324,18 +369,7 @@ export function QrCodeActions() {
                     type="button"
                     variant="secondary"
                     size="sm"
-                    onClick={() => {
-                      if (!validate()) return;
-                      trackDownloadClick("jpeg");
-                      setExportSettings({ extension: "jpeg" });
-                      setDownloadOpen(false);
-                      download(
-                        withQrFileVariant(
-                          buildQrFileName(doc),
-                          exportSettings.colorSpace,
-                        ),
-                      );
-                    }}
+                    onClick={() => void handleDownload("jpeg")}
                   >
                     JPEG
                   </Button>
@@ -343,18 +377,7 @@ export function QrCodeActions() {
                     type="button"
                     variant="secondary"
                     size="sm"
-                    onClick={() => {
-                      if (!validate()) return;
-                      trackDownloadClick("tiff");
-                      setExportSettings({ extension: "tiff" });
-                      setDownloadOpen(false);
-                      download(
-                        withQrFileVariant(
-                          buildQrFileName(doc),
-                          exportSettings.colorSpace,
-                        ),
-                      );
-                    }}
+                    onClick={() => void handleDownload("tiff")}
                   >
                     TIFF
                   </Button>
@@ -362,18 +385,7 @@ export function QrCodeActions() {
                     type="button"
                     variant="secondary"
                     size="sm"
-                    onClick={() => {
-                      if (!validate()) return;
-                      trackDownloadClick("svg");
-                      setExportSettings({ extension: "svg" });
-                      setDownloadOpen(false);
-                      download(
-                        withQrFileVariant(
-                          buildQrFileName(doc),
-                          exportSettings.colorSpace,
-                        ),
-                      );
-                    }}
+                    onClick={() => void handleDownload("svg")}
                   >
                     SVG
                   </Button>

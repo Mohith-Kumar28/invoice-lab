@@ -10,7 +10,7 @@ import {
   Loader2,
   Share2,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -46,6 +46,7 @@ export function GlobalActions() {
   const [shareUrl, setShareUrl] = useState("");
   const [copied, setCopied] = useState(false);
   const [savedOpen, setSavedOpen] = useState(false);
+  const hasTrackedToolOpen = useRef(false);
 
   const getNextInvoiceNumber = () => {
     let max = 0;
@@ -78,6 +79,15 @@ export function GlobalActions() {
       updateInvoice({ id: crypto.randomUUID(), createdAt: new Date() });
     }
   }, [invoice.id, updateInvoice]);
+
+  useEffect(() => {
+    if (hasTrackedToolOpen.current) return;
+    hasTrackedToolOpen.current = true;
+    trackEvent("tool_opened", {
+      tool: "invoice_generator",
+      path: typeof window !== "undefined" ? window.location.pathname : "",
+    });
+  }, []);
 
   const handleAutoSave = useCallback(
     (inv: Partial<Invoice>) => {
@@ -148,6 +158,13 @@ export function GlobalActions() {
         const el = document.getElementById(elId);
         el?.scrollIntoView({ behavior: "smooth", block: "center" });
       }
+      trackEvent("download_failed", {
+        tool: "invoice_generator",
+        file_type: "pdf",
+        status: "validation_failed",
+        error_type: "validation",
+        path: typeof window !== "undefined" ? window.location.pathname : "",
+      });
       return;
     }
 
@@ -192,6 +209,12 @@ export function GlobalActions() {
         link.click();
         document.body.removeChild(link);
         setTimeout(() => URL.revokeObjectURL(url), 30_000);
+        trackEvent("download_succeeded", {
+          tool: "invoice_generator",
+          file_type: "pdf",
+          template: invoice.template || "modern",
+          path: typeof window !== "undefined" ? window.location.pathname : "",
+        });
         return;
       }
 
@@ -201,7 +224,20 @@ export function GlobalActions() {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
       }, 0);
+      trackEvent("download_succeeded", {
+        tool: "invoice_generator",
+        file_type: "pdf",
+        template: invoice.template || "modern",
+        path: typeof window !== "undefined" ? window.location.pathname : "",
+      });
     } catch {
+      trackEvent("download_failed", {
+        tool: "invoice_generator",
+        file_type: "pdf",
+        status: "generation_failed",
+        error_type: "pdf_generation",
+        path: typeof window !== "undefined" ? window.location.pathname : "",
+      });
       setErrors({ general: "Failed to generate PDF. Please try again." });
       window.dispatchEvent(new CustomEvent("invoice:showErrors"));
     }

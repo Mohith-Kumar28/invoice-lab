@@ -10,7 +10,7 @@ import {
   Loader2,
   Share2,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -46,11 +46,21 @@ export function PayslipActions() {
   const [shareOpen, setShareOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
   const [copied, setCopied] = useState(false);
+  const hasTrackedToolOpen = useRef(false);
   const pdfBrand = usePdfBrand();
 
   useEffect(() => {
     if (!payslip.id) resetPayslip();
   }, [payslip.id, resetPayslip]);
+
+  useEffect(() => {
+    if (hasTrackedToolOpen.current) return;
+    hasTrackedToolOpen.current = true;
+    trackEvent("tool_opened", {
+      tool: "payslip_generator",
+      path: typeof window !== "undefined" ? window.location.pathname : "",
+    });
+  }, []);
 
   const handleAutoSave = useCallback(
     (p: Payslip) => {
@@ -120,6 +130,13 @@ export function PayslipActions() {
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
       window.dispatchEvent(new CustomEvent("payslip:showErrors"));
+      trackEvent("download_failed", {
+        tool: "payslip_generator",
+        file_type: "pdf",
+        status: "validation_failed",
+        error_type: "validation",
+        path: typeof window !== "undefined" ? window.location.pathname : "",
+      });
       return;
     }
 
@@ -145,7 +162,19 @@ export function PayslipActions() {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
       }, 0);
+      trackEvent("download_succeeded", {
+        tool: "payslip_generator",
+        file_type: "pdf",
+        path: typeof window !== "undefined" ? window.location.pathname : "",
+      });
     } catch {
+      trackEvent("download_failed", {
+        tool: "payslip_generator",
+        file_type: "pdf",
+        status: "generation_failed",
+        error_type: "pdf_generation",
+        path: typeof window !== "undefined" ? window.location.pathname : "",
+      });
       setErrors({ general: "Failed to generate PDF. Please try again." });
       window.dispatchEvent(new CustomEvent("payslip:showErrors"));
     } finally {
