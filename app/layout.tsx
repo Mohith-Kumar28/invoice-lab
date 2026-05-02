@@ -6,6 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { GoogleTag } from "@/components/shared/GoogleTag";
 import { GoogleTagManager } from "@/components/shared/GoogleTagManager";
+import { Hotjar } from "@/components/shared/Hotjar";
 import { ThemeProvider } from "@/components/shared/ThemeProvider";
 import { APP_NAME } from "@/lib/site";
 
@@ -29,7 +30,10 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>{useGtag ? <GoogleTag gtagId={gtagId} /> : null}</head>
+      <head>
+        {useGtag ? <GoogleTag gtagId={gtagId} /> : null}
+        <Hotjar />
+      </head>
       <body
         className={`${inter.variable} font-sans antialiased min-h-screen flex flex-col`}
       >
