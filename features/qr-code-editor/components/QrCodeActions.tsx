@@ -10,6 +10,7 @@ import {
   Share2,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ToolActionsBar } from "@/components/tools/ToolActionsBar";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -226,31 +227,34 @@ export function QrCodeActions() {
   };
 
   return (
-    <div className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur border-b border-border/40 p-3 sm:p-4 flex items-center shadow-sm overflow-x-auto gap-2 no-scrollbar shrink-0">
-      <Sheet open={savedOpen} onOpenChange={setSavedOpen}>
-        <SheetTrigger
-          render={
-            <Button variant="outline">
-              <Archive className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Saved QRs</span>
-            </Button>
-          }
-        />
-        <SheetContent
-          side="left"
-          className="w-[400px] sm:w-[540px] p-0 flex flex-col"
-        >
-          <SheetHeader className="p-4 border-b">
-            <SheetTitle>Last 50 QRs</SheetTitle>
-          </SheetHeader>
-          <div className="flex-1 overflow-hidden">
-            <SavedQrCodesList onSelect={() => setSavedOpen(false)} />
-          </div>
-        </SheetContent>
-      </Sheet>
+    <ToolActionsBar>
+      <ToolActionsBar.Left>
+        <Sheet open={savedOpen} onOpenChange={setSavedOpen}>
+          <SheetTrigger
+            render={
+              <Button variant="outline" size="sm">
+                <Archive className="h-4 w-4" />
+                <span className="sm:hidden">Saved</span>
+                <span className="hidden sm:inline">Saved QRs</span>
+              </Button>
+            }
+          />
+          <SheetContent
+            side="left"
+            className="w-[88vw] max-w-[540px] p-0 flex flex-col"
+          >
+            <SheetHeader className="p-4 border-b">
+              <SheetTitle>Last 50 QRs</SheetTitle>
+            </SheetHeader>
+            <div className="flex-1 overflow-hidden">
+              <SavedQrCodesList onSelect={() => setSavedOpen(false)} />
+            </div>
+          </SheetContent>
+        </Sheet>
+      </ToolActionsBar.Left>
 
-      <div className="flex items-center gap-2 ml-auto pl-2 shrink-0">
-        <div className="text-sm text-muted-foreground mr-2 flex items-center">
+      <ToolActionsBar.Middle>
+        <div className="hidden md:flex text-sm text-muted-foreground items-center min-h-9 px-1">
           {saveStatus === "saving" ? (
             <>
               <Loader2 className="h-4 w-4 mr-1 animate-spin" />
@@ -265,10 +269,16 @@ export function QrCodeActions() {
           ) : null}
         </div>
 
-        <Button variant="outline" onClick={handleShare}>
-          <Share2 className="h-4 w-4 sm:mr-2" />
-          <span className="hidden sm:inline">Share</span>
+        <Button
+          variant="outline"
+          size="icon-sm"
+          onClick={handleShare}
+          aria-label="Share QR"
+        >
+          <Share2 className="h-4 w-4" />
         </Button>
+      </ToolActionsBar.Middle>
+      <ToolActionsBar.Right>
         <Dialog open={shareOpen} onOpenChange={setShareOpen}>
           <DialogContent>
             <DialogHeader>
@@ -293,16 +303,16 @@ export function QrCodeActions() {
           </DialogContent>
         </Dialog>
 
-        <Button variant="secondary" onClick={() => resetDoc()}>
-          <FilePlus className="h-4 w-4 sm:mr-2" />
+        <Button variant="secondary" size="sm" onClick={() => resetDoc()}>
+          <FilePlus className="h-4 w-4" />
           <span>New</span>
         </Button>
 
         <DropdownMenu open={downloadOpen} onOpenChange={setDownloadOpen}>
           <DropdownMenuTrigger
             render={
-              <Button variant="default">
-                <Download className="h-4 w-4 sm:mr-2" />
+              <Button variant="default" size="sm">
+                <Download className="h-4 w-4" />
                 <span>Download</span>
               </Button>
             }
@@ -394,7 +404,7 @@ export function QrCodeActions() {
             </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
-    </div>
+      </ToolActionsBar.Right>
+    </ToolActionsBar>
   );
 }
