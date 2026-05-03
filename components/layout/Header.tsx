@@ -7,10 +7,10 @@ import { TOOL_NAV_LINKS } from "@/lib/tools";
 export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 max-w-screen-2xl items-center px-4 md:px-8 mx-auto justify-between">
-        <div className="flex items-center gap-4">
+      <div className="container mx-auto flex h-14 max-w-screen-2xl items-center justify-between gap-2 px-3 md:px-8">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-4">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="font-bold inline-block capitalize">
+            <span className="inline-block whitespace-nowrap font-bold capitalize">
               {APP_NAME}
             </span>
           </Link>
@@ -22,14 +22,15 @@ export function Header() {
           </div>
         </div>
 
-        <nav className="flex items-center space-x-4 sm:space-x-6 text-sm font-medium">
+        <nav className="flex items-center gap-2 text-xs font-medium sm:gap-4 sm:text-sm">
           {TOOL_NAV_LINKS.map((l) => (
             <Link
               key={l.href}
               href={l.href}
-              className="transition-colors hover:text-foreground/80 text-foreground/60"
+              className="whitespace-nowrap text-foreground/60 transition-colors hover:text-foreground/80"
             >
-              {l.label}
+              <span className="sm:hidden">{l.mobileLabel}</span>
+              <span className="hidden sm:inline">{l.label}</span>
             </Link>
           ))}
           <ThemeToggle />

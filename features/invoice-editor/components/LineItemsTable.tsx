@@ -44,7 +44,99 @@ export function LineItemsTable() {
           <div>{errors.lineItems}</div>
         </div>
       ) : null}
-      <div className="overflow-x-auto">
+
+      <div className="space-y-3 md:hidden">
+        {invoice.lineItems?.map((item, index) => (
+          <div
+            key={item.id || index}
+            className="rounded-lg border border-border/70 bg-card/60 p-3 shadow-sm"
+          >
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <label
+                htmlFor={`line-item-description-${item.id || index}`}
+                className="text-sm text-muted-foreground"
+              >
+                Item
+              </label>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={() => removeItem(index)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="space-y-2">
+              <Input
+                id={`line-item-description-${item.id || index}`}
+                placeholder="Item name"
+                value={item.description}
+                onChange={(e) =>
+                  updateItem(index, "description", e.target.value)
+                }
+              />
+              <Textarea
+                placeholder="Description (optional)"
+                rows={2}
+                className="min-h-[64px] resize-y"
+                value={item.details || ""}
+                onChange={(e) => updateItem(index, "details", e.target.value)}
+              />
+            </div>
+
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label
+                  htmlFor={`line-item-qty-${item.id || index}`}
+                  className="text-sm text-muted-foreground"
+                >
+                  Qty
+                </label>
+                <Input
+                  id={`line-item-qty-${item.id || index}`}
+                  type="number"
+                  min="0"
+                  step="1"
+                  className="text-right"
+                  value={item.quantity}
+                  onChange={(e) =>
+                    updateItem(index, "quantity", Number(e.target.value))
+                  }
+                />
+              </div>
+              <div className="space-y-1">
+                <label
+                  htmlFor={`line-item-price-${item.id || index}`}
+                  className="text-sm text-muted-foreground"
+                >
+                  Price
+                </label>
+                <Input
+                  id={`line-item-price-${item.id || index}`}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="text-right"
+                  value={item.unitPrice}
+                  onChange={(e) =>
+                    updateItem(index, "unitPrice", Number(e.target.value))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="mt-2 flex items-center justify-between border-t pt-2">
+              <p className="text-sm text-muted-foreground">Amount</p>
+              <p className="font-medium">
+                {formatMoney(item.amount || 0, invoice.currency)}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full min-w-[600px] text-sm">
           <thead>
             <tr className="border-b border-border/50 text-muted-foreground text-left">

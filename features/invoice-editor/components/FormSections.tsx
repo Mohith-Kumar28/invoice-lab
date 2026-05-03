@@ -404,12 +404,14 @@ export function Section2From() {
         </div>
         {fromCustomFields.length > 0 ? (
           <div className="border rounded-lg overflow-hidden">
-            <Table>
+            <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[180px]">Field</TableHead>
+                  <TableHead className="w-[110px] sm:w-[180px]">
+                    Field
+                  </TableHead>
                   <TableHead>Value</TableHead>
-                  <TableHead className="w-[56px]"></TableHead>
+                  <TableHead className="w-[44px] sm:w-[56px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -431,7 +433,7 @@ export function Section2From() {
                         }
                       />
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right pr-1 sm:pr-2">
                       <Button
                         variant="ghost"
                         size="icon-sm"
@@ -539,7 +541,10 @@ export function Section3To() {
   const toCustomFields = invoice.to?.customFields || [];
   const addToCustomField = () => {
     updateTo({
-      customFields: [...toCustomFields, { id: crypto.randomUUID(), label: "", value: "" }],
+      customFields: [
+        ...toCustomFields,
+        { id: crypto.randomUUID(), label: "", value: "" },
+      ],
     });
   };
   const updateToCustomField = (
@@ -547,7 +552,9 @@ export function Section3To() {
     patch: Partial<(typeof toCustomFields)[number]>,
   ) => {
     updateTo({
-      customFields: toCustomFields.map((f) => (f.id === id ? { ...f, ...patch } : f)),
+      customFields: toCustomFields.map((f) =>
+        f.id === id ? { ...f, ...patch } : f,
+      ),
     });
   };
   const removeToCustomField = (id: string) => {
@@ -625,12 +632,14 @@ export function Section3To() {
         </div>
         {toCustomFields.length > 0 ? (
           <div className="border rounded-lg overflow-hidden">
-            <Table>
+            <Table className="table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[180px]">Field</TableHead>
+                  <TableHead className="w-[110px] sm:w-[180px]">
+                    Field
+                  </TableHead>
                   <TableHead>Value</TableHead>
-                  <TableHead className="w-[56px]"></TableHead>
+                  <TableHead className="w-[44px] sm:w-[56px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -652,7 +661,7 @@ export function Section3To() {
                         }
                       />
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right pr-1 sm:pr-2">
                       <Button
                         variant="ghost"
                         size="icon-sm"
@@ -942,8 +951,8 @@ export function Section5Pricing() {
 
       <div className="border rounded-lg overflow-hidden">
         <div className="p-4 bg-muted/20">
-          <div className="flex items-start justify-between gap-4">
-            <div className="text-sm text-muted-foreground space-y-1">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 text-sm text-muted-foreground space-y-1">
               <div className="flex justify-between gap-6">
                 <span>Subtotal</span>
                 <span className="font-medium text-foreground">
@@ -975,14 +984,14 @@ export function Section5Pricing() {
                 </div>
               )}
             </div>
-            <div className="text-right min-w-[180px]">
+            <div className="w-full min-w-0 sm:w-auto sm:min-w-[180px] text-left sm:text-right">
               <div className="text-sm text-muted-foreground">Total</div>
-              <div className="text-3xl font-bold tracking-tight">
+              <div className="text-2xl sm:text-3xl font-bold tracking-tight wrap-break-word">
                 {formatMoney(invoice.total, invoice.currency)}
               </div>
               <Separator className="my-3" />
               <div className="text-sm text-muted-foreground">Amount Due</div>
-              <div className="text-lg font-semibold">
+              <div className="text-lg font-semibold wrap-break-word">
                 {formatMoney(invoice.amountDue || 0, invoice.currency)}
               </div>
             </div>

@@ -1,7 +1,13 @@
 "use client";
 
+import { X } from "lucide-react";
 import * as React from "react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 type SlotProps = { children: React.ReactNode };
 
@@ -45,10 +51,10 @@ export const ToolEditorLayout = Object.assign(
     const { actions, form, preview } = getSlotChildren(children);
 
     return (
-      <div className="fixed inset-0 top-14 flex flex-col md:flex-row overflow-hidden bg-background">
+      <div className="fixed inset-0 top-14 flex flex-col overflow-hidden bg-background md:flex-row">
         <div className="w-full md:w-1/2 h-full flex flex-col border-r border-border bg-muted/10">
           {actions}
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6">
+          <div className="flex-1 overflow-y-auto p-4 pb-28 md:p-6 md:pb-6">
             {form}
           </div>
         </div>
@@ -58,13 +64,13 @@ export const ToolEditorLayout = Object.assign(
         </div>
 
         {preview ? (
-          <div className="md:hidden fixed bottom-4 right-4 z-50">
+          <div className="md:hidden fixed bottom-[calc(env(safe-area-inset-bottom)+12px)] right-4 z-50">
             <Sheet>
               <SheetTrigger
                 render={
                   <button
                     type="button"
-                    className="bg-primary text-primary-foreground shadow-lg rounded-full px-6 py-3 font-semibold"
+                    className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg"
                   >
                     {mobilePreviewLabel}
                   </button>
@@ -72,8 +78,22 @@ export const ToolEditorLayout = Object.assign(
               />
               <SheetContent
                 side="bottom"
-                className="h-[85vh] p-0 rounded-t-xl flex flex-col"
+                showCloseButton={false}
+                className="data-[side=bottom]:h-[calc(100svh-3.5rem)] data-[side=bottom]:max-h-[calc(100svh-3.5rem)] rounded-t-2xl p-0 flex flex-col gap-0"
               >
+                <div className="flex items-center justify-end border-b bg-background/90 px-2 py-1.5 backdrop-blur shrink-0">
+                  <SheetClose
+                    render={
+                      <button
+                        type="button"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background text-foreground/70 hover:text-foreground"
+                      />
+                    }
+                  >
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Close preview</span>
+                  </SheetClose>
+                </div>
                 <div className="flex-1 overflow-hidden bg-background">
                   {preview}
                 </div>

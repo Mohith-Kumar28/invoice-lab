@@ -285,82 +285,91 @@ export function GlobalActions() {
   };
 
   return (
-    <div className="sticky top-0 z-40 w-full bg-background/95 backdrop-blur border-b border-border/40 p-3 sm:p-4 flex items-center shadow-sm overflow-x-auto gap-2 no-scrollbar shrink-0">
-      <div className="flex items-center space-x-2 shrink-0">
-        <Sheet open={savedOpen} onOpenChange={setSavedOpen}>
-          <SheetTrigger
-            render={
-              <Button variant="outline">
-                <Archive className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Saved Invoices</span>
-              </Button>
-            }
-          />
-          <SheetContent
-            side="left"
-            className="w-[400px] sm:w-[540px] p-0 flex flex-col"
-          >
-            <SheetHeader className="p-4 border-b">
-              <SheetTitle>Last 50 Invoices</SheetTitle>
-            </SheetHeader>
-            <div className="flex-1 overflow-hidden">
-              <SavedInvoicesList onSelect={() => setSavedOpen(false)} />
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-
-      <div className="flex items-center space-x-1 sm:space-x-2 shrink-0 ml-auto pl-2">
-        <div className="text-sm text-muted-foreground mr-2 flex items-center">
-          {saveStatus === "saving" && (
-            <>
-              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-              Saving...
-            </>
-          )}
-          {saveStatus === "saved" && (
-            <>
-              <Check className="h-4 w-4 mr-1 text-green-500" />
-              Saved
-            </>
-          )}
+    <div className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 p-2 sm:p-4 shadow-sm backdrop-blur shrink-0">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <Sheet open={savedOpen} onOpenChange={setSavedOpen}>
+            <SheetTrigger
+              render={
+                <Button variant="outline">
+                  <Archive className="h-4 w-4 sm:mr-2" />
+                  <span className="sm:hidden">Saved</span>
+                  <span className="hidden sm:inline">Saved Invoices</span>
+                </Button>
+              }
+            />
+            <SheetContent
+              side="left"
+              className="w-[88vw] max-w-[540px] p-0 flex flex-col"
+            >
+              <SheetHeader className="p-4 border-b">
+                <SheetTitle>Last 50 Invoices</SheetTitle>
+              </SheetHeader>
+              <div className="flex-1 overflow-hidden">
+                <SavedInvoicesList onSelect={() => setSavedOpen(false)} />
+              </div>
+            </SheetContent>
+          </Sheet>
+          <div className="text-sm text-muted-foreground flex items-center min-h-9 px-1">
+            {saveStatus === "saving" && (
+              <>
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                Saving...
+              </>
+            )}
+            {saveStatus === "saved" && (
+              <>
+                <Check className="h-4 w-4 mr-1 text-green-500" />
+                Saved
+              </>
+            )}
+            {saveStatus === "idle" ? (
+              <span className="opacity-0">Saved</span>
+            ) : null}
+          </div>
         </div>
-        <Button variant="outline" onClick={handleShare}>
-          <Share2 className="h-4 w-4 sm:mr-2" />
-          <span className="hidden sm:inline">Share</span>
-        </Button>
-        <Dialog open={shareOpen} onOpenChange={setShareOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Share invoice</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-2">
-              <Input readOnly value={shareUrl} />
-            </div>
-            <DialogFooter>
-              <DialogClose render={<Button variant="outline" />}>
-                Close
-              </DialogClose>
-              <Button onClick={handleCopy} variant="default">
-                {copied ? (
-                  <Check className="h-4 w-4 sm:mr-2" />
-                ) : (
-                  <Copy className="h-4 w-4 sm:mr-2" />
-                )}
-                <span>{copied ? "Copied" : "Copy link"}</span>
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        <Button variant="secondary" onClick={handleNew}>
-          <FilePlus className="h-4 w-4 sm:mr-2" />
-          <span>New</span>
-        </Button>
-        <Button variant="default" onClick={handleDownload}>
-          <FileDown className="h-4 w-4 sm:mr-2" />
-          <span className="sm:hidden">Download</span>
-          <span className="hidden sm:inline">Download PDF</span>
-        </Button>
+        <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-2">
+          <Button
+            variant="outline"
+            onClick={handleShare}
+            size="icon"
+            aria-label="Share invoice"
+          >
+            <Share2 className="h-4 w-4" />
+          </Button>
+          <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Share invoice</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-2">
+                <Input readOnly value={shareUrl} />
+              </div>
+              <DialogFooter>
+                <DialogClose render={<Button variant="outline" />}>
+                  Close
+                </DialogClose>
+                <Button onClick={handleCopy} variant="default">
+                  {copied ? (
+                    <Check className="h-4 w-4 sm:mr-2" />
+                  ) : (
+                    <Copy className="h-4 w-4 sm:mr-2" />
+                  )}
+                  <span>{copied ? "Copied" : "Copy link"}</span>
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <Button variant="secondary" onClick={handleNew}>
+            <FilePlus className="h-4 w-4 sm:mr-2" />
+            <span>New</span>
+          </Button>
+          <Button variant="default" onClick={handleDownload}>
+            <FileDown className="h-4 w-4 sm:mr-2" />
+            <span className="sm:hidden">Download</span>
+            <span className="hidden sm:inline">Download PDF</span>
+          </Button>
+        </div>
       </div>
     </div>
   );
