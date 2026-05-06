@@ -50,7 +50,7 @@ export function SignatureSection({
     const ratio = Math.max(window.devicePixelRatio || 1, 1);
     const width = wrap.clientWidth;
     if (!width) return;
-    const height = wrap.clientHeight || 140;
+    const height = wrap.clientHeight || 200;
     canvas.width = width * ratio;
     canvas.height = height * ratio;
     canvas.style.width = `${width}px`;
@@ -117,15 +117,11 @@ export function SignatureSection({
       padRef.current?.off();
       padRef.current = null;
     };
-  }, [enabled, resizeCanvas, mode]);
+  }, [enabled, resizeCanvas, mode, onImageDataChange]);
 
   const clearDraw = () => {
     padRef.current?.clear();
-  };
-
-  const saveDraw = () => {
-    if (!padRef.current || padRef.current.isEmpty()) return;
-    onImageDataChange(padRef.current.toDataURL("image/png"));
+    onImageDataChange(undefined);
   };
 
   const handleSignatureUpload = (file: File) => {
@@ -191,11 +187,14 @@ export function SignatureSection({
               <Label>Draw Signature</Label>
               <div
                 ref={canvasWrapRef}
-                className="border rounded-lg overflow-hidden bg-white h-[140px]"
+                className="h-[200px] rounded-lg border bg-white overflow-hidden md:h-[220px]"
               >
                 <canvas ref={canvasRef} className="w-full h-full touch-none" />
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-muted-foreground">
+                  Auto-saves after each stroke.
+                </p>
                 <Button
                   variant="outline"
                   size="sm"
@@ -203,16 +202,6 @@ export function SignatureSection({
                   type="button"
                 >
                   Clear
-                </Button>
-                <Button
-                  size="sm"
-                  type="button"
-                  onClick={() => {
-                    saveDraw();
-                    onModeChange("draw");
-                  }}
-                >
-                  Use Drawn
                 </Button>
               </div>
             </div>

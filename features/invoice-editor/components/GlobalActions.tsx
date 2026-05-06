@@ -244,6 +244,15 @@ export function GlobalActions() {
     }
   };
 
+  useEffect(() => {
+    const onPreviewDownload = () => {
+      void handleDownload();
+    };
+    window.addEventListener("tool:previewDownload", onPreviewDownload);
+    return () =>
+      window.removeEventListener("tool:previewDownload", onPreviewDownload);
+  }, [handleDownload]);
+
   const handleNew = () => {
     const nextInvoiceNumber = getNextInvoiceNumber();
     resetInvoice();

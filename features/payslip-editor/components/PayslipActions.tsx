@@ -183,6 +183,15 @@ export function PayslipActions() {
     }
   };
 
+  useEffect(() => {
+    const onPreviewDownload = () => {
+      void handleDownload();
+    };
+    window.addEventListener("tool:previewDownload", onPreviewDownload);
+    return () =>
+      window.removeEventListener("tool:previewDownload", onPreviewDownload);
+  }, [handleDownload]);
+
   return (
     <ToolActionsBar>
       <ToolActionsBar.Left>

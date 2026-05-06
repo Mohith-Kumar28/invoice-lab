@@ -191,6 +191,16 @@ export function QrCodeActions() {
     }
   };
 
+  useEffect(() => {
+    const onPreviewDownload = () => {
+      const ext = exportSettings.extension || "png";
+      void handleDownload(ext);
+    };
+    window.addEventListener("tool:previewDownload", onPreviewDownload);
+    return () =>
+      window.removeEventListener("tool:previewDownload", onPreviewDownload);
+  }, [exportSettings.extension, handleDownload]);
+
   const buildShareUrl = () => {
     const u = new URL(window.location.href);
     u.searchParams.delete("s");

@@ -38,6 +38,9 @@ export function DatePicker({ date, setDate }: DatePickerProps) {
           mode="single"
           selected={date}
           onSelect={setDate}
+          captionLayout="dropdown"
+          startMonth={new Date(1950, 0)}
+          endMonth={new Date(2100, 11)}
           initialFocus
         />
       </PopoverContent>

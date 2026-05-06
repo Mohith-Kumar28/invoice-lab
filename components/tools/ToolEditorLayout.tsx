@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { Download, X } from "lucide-react";
 import * as React from "react";
 import {
   Sheet,
@@ -49,6 +49,7 @@ export const ToolEditorLayout = Object.assign(
     mobilePreviewLabel = "Preview PDF",
   }: ToolEditorLayoutProps) {
     const { actions, form, preview } = getSlotChildren(children);
+    const [mobilePreviewOpen, setMobilePreviewOpen] = React.useState(false);
 
     return (
       <div className="fixed inset-0 top-14 flex flex-col overflow-hidden bg-background md:flex-row">
@@ -65,7 +66,7 @@ export const ToolEditorLayout = Object.assign(
 
         {preview ? (
           <div className="md:hidden fixed bottom-[calc(env(safe-area-inset-bottom)+12px)] right-4 z-50">
-            <Sheet>
+            <Sheet open={mobilePreviewOpen} onOpenChange={setMobilePreviewOpen}>
               <SheetTrigger
                 render={
                   <button
@@ -79,9 +80,20 @@ export const ToolEditorLayout = Object.assign(
               <SheetContent
                 side="bottom"
                 showCloseButton={false}
-                className="data-[side=bottom]:h-[calc(100svh-3.5rem)] data-[side=bottom]:max-h-[calc(100svh-3.5rem)] rounded-t-2xl p-0 flex flex-col gap-0"
+                className="data-[side=bottom]:h-[75svh] data-[side=bottom]:max-h-[75svh] rounded-t-2xl p-0 flex flex-col gap-0"
               >
-                <div className="flex items-center justify-end border-b bg-background/90 px-2 py-1.5 backdrop-blur shrink-0">
+                <div className="flex items-center justify-between border-b bg-background/90 px-3 py-1.5 backdrop-blur shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent("tool:previewDownload"));
+                      setMobilePreviewOpen(false);
+                    }}
+                    className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Download</span>
+                  </button>
                   <SheetClose
                     render={
                       <button
