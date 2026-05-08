@@ -7,7 +7,7 @@ function buildLlmsText() {
 
 Site: ${SITE_URL}
 
-## Summary
+## Summary.
 ${APP_NAME} is a local-first collection of free business tools that run in your browser (client-side). No signup. No backend database for your documents by default.
 
 ## Tools
