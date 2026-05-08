@@ -193,7 +193,10 @@ export function QrCodeActions() {
 
   useEffect(() => {
     const onPreviewDownload = () => {
-      const ext = exportSettings.extension || "png";
+      const ext =
+        exportSettings.extension === "webp"
+          ? "png"
+          : (exportSettings.extension ?? "png");
       void handleDownload(ext);
     };
     window.addEventListener("tool:previewDownload", onPreviewDownload);
