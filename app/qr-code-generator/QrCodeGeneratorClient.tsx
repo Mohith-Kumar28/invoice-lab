@@ -37,7 +37,7 @@ export function QrCodeGeneratorClient() {
   }, [params, setDoc, router, pathname, doc]);
 
   return (
-    <ToolEditorLayout mobilePreviewLabel="Preview QR">
+    <ToolEditorLayout mobilePreviewLabel="Download QR">
       <ToolEditorLayout.Actions>
         <QrCodeActions />
       </ToolEditorLayout.Actions>

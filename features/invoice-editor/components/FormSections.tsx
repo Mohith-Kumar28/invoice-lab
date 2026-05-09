@@ -1073,7 +1073,7 @@ export function Section6Payment() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[180px]">Field</TableHead>
+                <TableHead className="w-[150px]">Field</TableHead>
                 <TableHead>Value</TableHead>
               </TableRow>
             </TableHeader>

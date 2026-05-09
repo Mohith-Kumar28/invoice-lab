@@ -8,6 +8,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { trackEvent } from "@/lib/analytics";
 
 type SlotProps = { children: React.ReactNode };
 
@@ -46,10 +47,21 @@ function getSlotChildren(children: React.ReactNode) {
 export const ToolEditorLayout = Object.assign(
   function ToolEditorLayout({
     children,
-    mobilePreviewLabel = "Preview PDF",
+    mobilePreviewLabel = "Download",
   }: ToolEditorLayoutProps) {
     const { actions, form, preview } = getSlotChildren(children);
     const [mobilePreviewOpen, setMobilePreviewOpen] = React.useState(false);
+    const handleMobilePreviewOpenChange = React.useCallback(
+      (open: boolean) => {
+        setMobilePreviewOpen(open);
+        if (!open) return;
+        trackEvent("preview_opened", {
+          surface: "mobile_sheet",
+          path: typeof window !== "undefined" ? window.location.pathname : "",
+        });
+      },
+      [],
+    );
 
     return (
       <div className="fixed inset-0 top-14 flex flex-col overflow-hidden bg-background md:flex-row">
@@ -66,7 +78,10 @@ export const ToolEditorLayout = Object.assign(
 
         {preview ? (
           <div className="md:hidden fixed bottom-[calc(env(safe-area-inset-bottom)+12px)] right-4 z-50">
-            <Sheet open={mobilePreviewOpen} onOpenChange={setMobilePreviewOpen}>
+            <Sheet
+              open={mobilePreviewOpen}
+              onOpenChange={handleMobilePreviewOpenChange}
+            >
               <SheetTrigger
                 render={
                   <button

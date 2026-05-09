@@ -31,7 +31,7 @@ export function InvoiceGeneratorClient() {
   }, [params, setInvoice, router, pathname]);
 
   return (
-    <ToolEditorLayout mobilePreviewLabel="Preview Invoice">
+    <ToolEditorLayout mobilePreviewLabel="Download Invoice">
       <ToolEditorLayout.Actions>
         <GlobalActions />
       </ToolEditorLayout.Actions>

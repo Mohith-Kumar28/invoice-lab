@@ -40,7 +40,7 @@ export function PayslipGeneratorClient() {
   }, [params, updatePayslip, router, pathname]);
 
   return (
-    <ToolEditorLayout mobilePreviewLabel="Preview Payslip">
+    <ToolEditorLayout mobilePreviewLabel="Download Payslip">
       <ToolEditorLayout.Actions>
         <PayslipActions />
       </ToolEditorLayout.Actions>
